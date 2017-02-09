@@ -16,7 +16,7 @@ public class TCPEchoServer {
 		// Create server socket
 		ServerSocket serverSocket = new ServerSocket(PORT);
 
-		System.out.println("Server Running");
+		//System.out.println("Server Running");
 
 		// do this forever
 		while (true) {
