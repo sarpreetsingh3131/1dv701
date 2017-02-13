@@ -41,15 +41,15 @@ public class Request {
 		if (!headers.containsKey(Header.Type.Host)) {
 			throw new UnknownRequestException("Header is missing!!");
 		}
-		
+
 		return new Request(getType(request[0]), request[1], headers);
 	}
 
-	public boolean isConnectionClosed() {
+	public boolean needMoreConnection() {
 		try {
-			return headers.get(Header.Type.Connection).getTypeValue().contains("close");
+			return !headers.get(Header.Type.Connection).getTypeValue().contains("close");
 		} catch (Exception e) {
-			return false;
+			return true;
 		}
 	}
 

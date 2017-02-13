@@ -41,11 +41,11 @@ public class ClientThread extends Thread {
 
 				try {
 					response = responseFactory.getResponse(request.parseRequest(userRequest));
-					connection = !request.isConnectionClosed();
+					connection = request.needMoreConnection();
 				} catch (UnknownRequestException | IOException e) {
 					connection = false;
 				}
-				
+
 				replyToClient(response, connection);
 			}
 		} catch (IOException e) {
@@ -61,7 +61,7 @@ public class ClientThread extends Thread {
 		PrintWriter printer = new PrintWriter(socket.getOutputStream(), true);
 		printer.write(response.getResponseString(connection));
 		printer.flush();
-
+		
 		if (response.getResponseType() == ResponseType.OK) {
 			FileInputStream in = new FileInputStream(response.getFile());
 			OutputStream out = socket.getOutputStream();
