@@ -18,6 +18,7 @@ public class ClientThread extends Thread {
 	@SuppressWarnings("unused")
 	private final int clientId;
 	private ResponseFactory responseFactory;
+	private Request request;
 	private byte[] buffer;
 	private final int TIME_OUT = 10000;
 
@@ -25,13 +26,28 @@ public class ClientThread extends Thread {
 		this.socket = socket;
 		this.clientId = clientId;
 		responseFactory = new ResponseFactory(sharedFolder);
+		request = new Request();
 		buffer = new byte[8192];
 	}
 
 	@Override
 	public void run() {
 		try {
-			while (connected());
+			boolean connection = true;
+			while (connection) {
+				socket.setSoTimeout(TIME_OUT);
+				String userRequest = read(new BufferedReader(new InputStreamReader(socket.getInputStream())));
+				Response response = null;
+
+				try {
+					response = responseFactory.getResponse(request.parseRequest(userRequest));
+					connection = !request.isConnectionClosed();
+				} catch (UnknownRequestException | IOException e) {
+					connection = false;
+				}
+				
+				replyToClient(response, connection);
+			}
 		} catch (IOException e) {
 		}
 		try {
@@ -39,23 +55,6 @@ public class ClientThread extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private boolean connected() throws IOException {
-		boolean connection = true;
-		socket.setSoTimeout(TIME_OUT);
-		String userRequest = read(new BufferedReader(new InputStreamReader(socket.getInputStream())));
-		Request request = new Request();
-		Response response = null;
-
-		try {
-			response = responseFactory.getResponse(request.parseRequest(userRequest));
-		} catch (UnknownRequestException | IOException e) {
-			connection = false;
-		}
-		connection = !request.isConnectionClosed();
-		replyToClient(response, connection);
-		return connection;
 	}
 
 	private void replyToClient(Response response, boolean connection) throws IOException {
@@ -78,7 +77,7 @@ public class ClientThread extends Thread {
 		}
 	}
 
-	public String read(BufferedReader reader) throws IOException {
+	private String read(BufferedReader reader) throws IOException {
 		StringBuilder content = new StringBuilder();
 
 		while (true) {
@@ -89,7 +88,7 @@ public class ClientThread extends Thread {
 			}
 
 			content.append(line + "\r\n");
-			
+
 			if (line.equals("\r\n") || line.isEmpty() || line.equals("")) {
 				break;
 			}

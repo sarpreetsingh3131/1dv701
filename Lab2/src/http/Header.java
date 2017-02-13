@@ -26,12 +26,15 @@ public class Header {
 	private Type type;
 	private String typeValue;
 
-	public Header(String typeValue, Type type) {
+	public Header() {
+	}
+	
+	private Header(String typeValue, Type type) {
 		this.typeValue = typeValue;
 		this.type = type;
 	}
 
-	public static Header getHeader(String header) throws UnknownRequestException {
+	public Header getHeader(String header) throws UnknownRequestException {
 		if (header.split(": ").length != 2) {
 			throw new UnknownRequestException("(Incorrect header: " + header + ")");
 		}

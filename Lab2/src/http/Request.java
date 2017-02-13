@@ -10,33 +10,39 @@ public class Request {
 	private Type type;
 	private String URL;
 	private Map<Header.Type, Header> headers;
+	private Header header;
 
 	public Request() {
-		URL = "";
-		headers = new HashMap<Header.Type, Header>();
+		header = new Header();
+	}
+
+	private Request(Type type, String URL, Map<http.Header.Type, Header> headers) {
+		this.type = type;
+		this.URL = URL;
+		this.headers = headers;
+		header = new Header();
 	}
 
 	public Request parseRequest(String userRequest) throws UnknownRequestException {
 		String[] totalLines = userRequest.split("\r\n");
 		String[] request = totalLines[0].split(" ");
-	
+
 		if (request.length != 3) {
 			throw new UnknownRequestException("(Incorrect request: " + userRequest + ")");
 		}
 
-		this.type = getType(request[0]);
-		this.URL = request[1];
-		
+		Map<Header.Type, Header> headers = new HashMap<>();
+
 		for (int i = 1; i < totalLines.length; i++) {
-			Header header = Header.getHeader(totalLines[i]);
+			Header header = this.header.getHeader(totalLines[i]);
 			headers.put(header.getType(), header);
 		}
-	
+
 		if (!headers.containsKey(Header.Type.Host)) {
 			throw new UnknownRequestException("Header is missing!!");
 		}
 
-		return this;
+		return new Request(getType(request[0]), request[1], headers);
 	}
 
 	public boolean isConnectionClosed() {
