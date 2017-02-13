@@ -41,7 +41,7 @@ public class Request {
 		if (!headers.containsKey(Header.Type.Host)) {
 			throw new UnknownRequestException("Header is missing!!");
 		}
-
+		
 		return new Request(getType(request[0]), request[1], headers);
 	}
 

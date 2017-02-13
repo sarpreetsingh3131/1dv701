@@ -22,10 +22,10 @@ public class ClientThread extends Thread {
 	private byte[] buffer;
 	private final int TIME_OUT = 10000;
 
-	public ClientThread(Socket socket, int clientId, SharedFolder sharedFolder) {
+	public ClientThread(Socket socket, int clientId) {
 		this.socket = socket;
 		this.clientId = clientId;
-		responseFactory = new ResponseFactory(sharedFolder);
+		responseFactory = new ResponseFactory(new SharedFolder());
 		request = new Request();
 		buffer = new byte[8192];
 	}

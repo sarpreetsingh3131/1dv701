@@ -9,13 +9,20 @@ public class Server {
 	final static int PORT = 8080;
 	static int clientId = 0;
 
+	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException {
-		@SuppressWarnings("resource")
-		ServerSocket serverSocket = new ServerSocket(PORT);
+
+		ServerSocket serverSocket = null;
+		try {
+			serverSocket = new ServerSocket(PORT);
+		} catch (IOException e) {
+			System.out.println("ERROR: PORT IS IN USE!!");
+			System.exit(1);
+		}
 
 		while (true) {
 			Socket socket = serverSocket.accept();
-			ClientThread client = new ClientThread(socket, ++clientId, new SharedFolder());
+			ClientThread client = new ClientThread(socket, ++clientId);
 			client.start();
 		}
 	}
