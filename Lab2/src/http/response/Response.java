@@ -3,6 +3,8 @@ package http.response;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Date;
+
 import http.exceptions.InternalServerException;
 
 public abstract class Response {
@@ -24,27 +26,26 @@ public abstract class Response {
 			this.extensions = extensions.split(", ");
 		}
 	}
-	
+
 	protected Socket socket;
-	
+
 	public Response(Socket socket) {
 		this.socket = socket;
 	}
-	
+
 	public abstract void sendResponse() throws InternalServerException;
-	
+
 	protected void writeHeader(String header, long length, String fileExtension) throws InternalServerException {
-		header += getContentLengthAndType(length, fileExtension);
-		
+		header += getContentLengthAndType(length, fileExtension) + "Date: " + new Date().toString() + "\r\n\r\n";
 		try {
 			PrintWriter printer = new PrintWriter(socket.getOutputStream(), true);
-			printer.write(header + "\r\n");
+			printer.write(header);
 			printer.flush();
 		} catch (Exception e) {
 			throw new InternalServerException();
 		}
 	}
-	
+
 	protected void writeContent(String content) throws InternalServerException {
 		try {
 			socket.getOutputStream().write(content.getBytes());
@@ -52,7 +53,7 @@ public abstract class Response {
 			throw new InternalServerException();
 		}
 	}
-	
+
 	private String getContentLengthAndType(long length, String fileExtension) {
 		for (ContentType type : ContentType.values()) {
 			for (String extension : type.extensions) {
