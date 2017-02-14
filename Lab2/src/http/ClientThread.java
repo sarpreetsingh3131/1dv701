@@ -82,7 +82,7 @@ public class ClientThread extends Thread {
 
 		while (true) {
 			String line = reader.readLine();
-
+			
 			if (line == null) {
 				throw new IOException();
 			}

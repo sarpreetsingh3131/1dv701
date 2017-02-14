@@ -6,7 +6,7 @@ import http.Request;
 public class Response405MethodNotSupported extends Response {
 
 	private final String RESPONSE;
-	private final String CONTENT = "<html><body><h1>400 Bad request</h1></body></html>";
+	private final String CONTENT = "<html><body><h1>405 Method not supported</h1></body></html>";
 	private final String EXTENSION = "text/html";
 	private final ResponseType RESPONSE_TYPE = ResponseType.METHOD_NOT_SUPPORTED;
 
