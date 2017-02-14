@@ -15,9 +15,7 @@ public class Response200OK extends Response {
 	@Override
 	public String getResponseString(boolean connection) {
 		String[] parts = file.getName().split("\\.");
-		ContentType type = super.getContentType(parts[parts.length - 1]);
-		return RESPONSE + super.getContentLength(file.length()) + super.getContentType(type)
-				+ super.getConnection(connection);
+		return RESPONSE + super.getContentLengthAndType(file.length(), parts[parts.length - 1]) + super.getConnection(connection);
 	}
 
 	@Override

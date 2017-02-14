@@ -14,35 +14,20 @@ public abstract class Response {
 		applicationunknown("application/unknown", "*");
 
 		private String value;
-		private String[] fileExtensions;
+		private String[] extensions;
 
-		private ContentType(String value, String fileExtensions) {
+		private ContentType(String value, String extensions) {
 			this.value = value;
-			this.fileExtensions = fileExtensions.split(", ");
-		}
-
-		private String getValue() {
-			return value;
+			this.extensions = extensions.split(", ");
 		}
 	}
-	
+
 	public enum ResponseType {OK, BAD_REQUEST, FORBIDDEN, NOT_FOUND, METHOD_NOT_SUPPORTED}
 	
 	public abstract ResponseType getResponseType();
-	
 	public abstract String getResponseString(boolean connection);
-
 	public abstract String getContent();
-	
 	public abstract File getFile();
-	
-	protected String getContentLength(long length) {
-		return "Content-Length: " + length + "\r\n";
-	}
-
-	protected String getContentType(ContentType type) {
-		return "Content-Type: " + type.getValue() + "\r\n";
-	}
 
 	protected String getConnection(boolean connection) {
 		if (connection) {
@@ -50,15 +35,15 @@ public abstract class Response {
 		}
 		return "Connection: close\r\n\r\n";
 	}
-	
-	protected ContentType getContentType(String fileExtension) {
-		for(ContentType type: ContentType.values()) {
-			for(String extension: type.fileExtensions) {
-				if(fileExtension.equals(extension)) {
-					return type;
+
+	protected String getContentLengthAndType(long length, String fileExtension) {
+		for (ContentType type : ContentType.values()) {
+			for (String extension : type.extensions) {
+				if (fileExtension.equals(extension)) {
+					return "Content-Length: " + length + "\r\nContent-Type: " + type.value + "\r\n";
 				}
 			}
 		}
-		return ContentType.applicationunknown;
+		return "Content-Length: " + length + "\r\nContent-Type: " + ContentType.applicationunknown.value + "\r\n";
 	}
 }

@@ -6,12 +6,12 @@ public class Response404NotFound extends Response {
 
 	private final String RESPONSE = "HTTP/1.1 404 Not Found\r\n";
 	private final String CONTENT = "<html><body><h1>404 Not Found</h1></body></html>";
-	private final ContentType CONTENT_TYPE = ContentType.texthtml;
+	private final String EXTENSION = "text/html";
 	private final ResponseType RESPONSE_TYPE = ResponseType.NOT_FOUND;
 
 	@Override
 	public String getResponseString(boolean connection) {
-		return RESPONSE + super.getContentLength(CONTENT.getBytes().length) + super.getContentType(CONTENT_TYPE)
+		return RESPONSE + super.getContentLengthAndType(CONTENT.getBytes().length, EXTENSION)
 				+ super.getConnection(connection);
 	}
 

@@ -8,9 +8,9 @@ public class SharedFolder {
 
 	private File sharedDirectory = new File("src/http/resources/inner");
 
-	public synchronized File getURL(String path) throws IOException {
+	public synchronized File getFile(String path) throws IOException {
 		if (path.endsWith("htm")) {
-			path = path.split("\\.")[0] + ".html";
+			path += "l";
 		} else if (path.charAt(path.length() - 1) != '/' && path.split("\\.").length == 0) {
 			path += "/";
 		}
@@ -26,7 +26,7 @@ public class SharedFolder {
 			}
 		}
 
-		if (file.getName().equals("secret.html")) {
+		if (file.getName().contains("secret.htm")) {
 			throw new SecurityException();
 		}
 		if (file.exists()) {

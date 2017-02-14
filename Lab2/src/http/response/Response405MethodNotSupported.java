@@ -7,7 +7,7 @@ public class Response405MethodNotSupported extends Response {
 
 	private final String RESPONSE;
 	private final String CONTENT = "<html><body><h1>400 Bad request</h1></body></html>";
-	private final ContentType CONTENT_TYPE = ContentType.texthtml;
+	private final String EXTENSION = "text/html";
 	private final ResponseType RESPONSE_TYPE = ResponseType.METHOD_NOT_SUPPORTED;
 
 	public Response405MethodNotSupported(Request.Type type) {
@@ -16,7 +16,7 @@ public class Response405MethodNotSupported extends Response {
 
 	@Override
 	public String getResponseString(boolean connection) {
-		return RESPONSE + super.getContentLength(CONTENT.getBytes().length) + super.getContentType(CONTENT_TYPE)
+		return RESPONSE + super.getContentLengthAndType(CONTENT.getBytes().length, EXTENSION)
 				+ super.getConnection(connection);
 	}
 

@@ -17,7 +17,7 @@ public class ResponseFactory {
 	public Response getResponse(Request request) throws IOException {
 		if (request.getRequestType() == Request.Type.GET) {
 			try {
-				File file = sharedFolder.getURL(request.getURL());
+				File file = sharedFolder.getFile(request.getPath());
 				return new Response200OK(file);
 			}catch (FileNotFoundException e) {
 				return new Response404NotFound();

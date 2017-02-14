@@ -8,7 +8,7 @@ public class Request {
 
 	public enum Type {GET}
 	private Type type;
-	private String URL;
+	private String path;
 	private Map<Header.Type, Header> headers;
 	private Header header;
 
@@ -16,9 +16,9 @@ public class Request {
 		header = new Header();
 	}
 
-	private Request(Type type, String URL, Map<http.Header.Type, Header> headers) {
+	private Request(Type type, String path, Map<http.Header.Type, Header> headers) {
 		this.type = type;
-		this.URL = URL;
+		this.path = path;
 		this.headers = headers;
 		header = new Header();
 	}
@@ -66,7 +66,7 @@ public class Request {
 		return type;
 	}
 
-	public String getURL() {
-		return URL;
+	public String getPath() {
+		return path;
 	}
 }
