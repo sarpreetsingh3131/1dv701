@@ -22,7 +22,7 @@ public abstract class Response {
 		}
 	}
 
-	public enum ResponseType {OK, BAD_REQUEST, FORBIDDEN, NOT_FOUND, METHOD_NOT_SUPPORTED}
+	public enum ResponseType {OK, BAD_REQUEST, FORBIDDEN, NOT_FOUND, METHOD_NOT_SUPPORTED, Time_out, Not_Implemented, Too_Many_Requests, Conflict, Gone, Unsupport_Media_Type}
 	
 	public abstract ResponseType getResponseType();
 	public abstract String getResponseString(boolean connection);
