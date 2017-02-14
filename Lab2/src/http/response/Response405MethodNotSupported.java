@@ -1,37 +1,24 @@
 package http.response;
 
-import java.io.File;
+import java.net.Socket;
 import http.Request;
+import http.exceptions.InternalServerException;
 
 public class Response405MethodNotSupported extends Response {
 
 	private final String RESPONSE;
 	private final String CONTENT = "<html><body><h1>405 Method not supported</h1></body></html>";
 	private final String EXTENSION = "text/html";
-	private final ResponseType RESPONSE_TYPE = ResponseType.METHOD_NOT_SUPPORTED;
-
-	public Response405MethodNotSupported(Request.Type type) {
-		RESPONSE = "HTTP/1.1 405 Method " + type.toString() + " not supported\r\n";
+	
+	public Response405MethodNotSupported(Request.Type type, Socket socket) {
+		super(socket);
+		System.out.println(type.toString());
+		RESPONSE = "HTTP/1.1 405 Method " + type.toString() + " Not Allowed\r\n";
 	}
 
 	@Override
-	public String getResponseString(boolean connection) {
-		return RESPONSE + super.getContentLengthAndType(CONTENT.getBytes().length, EXTENSION)
-				+ super.getConnection(connection);
-	}
-
-	@Override
-	public ResponseType getResponseType() {
-		return RESPONSE_TYPE;
-	}
-
-	@Override
-	public String getContent() {
-		return CONTENT;
-	}
-
-	@Override
-	public File getFile() {
-		return null;
+	public void sendResponse() throws InternalServerException {
+		super.writeHeader(RESPONSE, CONTENT.getBytes().length, EXTENSION);
+		super.writeContent(CONTENT);
 	}
 }

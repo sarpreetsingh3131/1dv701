@@ -1,6 +1,9 @@
 package http.response;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+import http.exceptions.InternalServerException;
 
 public abstract class Response {
 
@@ -21,22 +24,36 @@ public abstract class Response {
 			this.extensions = extensions.split(", ");
 		}
 	}
-
-	public enum ResponseType {OK, BAD_REQUEST, FORBIDDEN, NOT_FOUND, METHOD_NOT_SUPPORTED, Time_out, Not_Implemented, Too_Many_Requests, Conflict, Gone, Unsupport_Media_Type}
 	
-	public abstract ResponseType getResponseType();
-	public abstract String getResponseString(boolean connection);
-	public abstract String getContent();
-	public abstract File getFile();
-
-	protected String getConnection(boolean connection) {
-		if (connection) {
-			return "\r\n";
-		}
-		return "Connection: close\r\n\r\n";
+	protected Socket socket;
+	
+	public Response(Socket socket) {
+		this.socket = socket;
 	}
-
-	protected String getContentLengthAndType(long length, String fileExtension) {
+	
+	public abstract void sendResponse() throws InternalServerException;
+	
+	protected void writeHeader(String header, long length, String fileExtension) throws InternalServerException {
+		header += getContentLengthAndType(length, fileExtension);
+		
+		try {
+			PrintWriter printer = new PrintWriter(socket.getOutputStream(), true);
+			printer.write(header + "\r\n");
+			printer.flush();
+		} catch (Exception e) {
+			throw new InternalServerException();
+		}
+	}
+	
+	protected void writeContent(String content) throws InternalServerException {
+		try {
+			socket.getOutputStream().write(content.getBytes());
+		} catch (IOException e) {
+			throw new InternalServerException();
+		}
+	}
+	
+	private String getContentLengthAndType(long length, String fileExtension) {
 		for (ContentType type : ContentType.values()) {
 			for (String extension : type.extensions) {
 				if (fileExtension.equals(extension)) {

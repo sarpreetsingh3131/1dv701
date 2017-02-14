@@ -2,13 +2,12 @@ package http;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 
 public class SharedFolder {
 
 	private File sharedDirectory = new File("src/http/resources/inner");
 
-	public synchronized File getFile(String path) throws IOException {
+	public synchronized File getFile(String path) throws FileNotFoundException {
 		if (path.endsWith("htm")) {
 			path += "l";
 		} else if (path.charAt(path.length() - 1) != '/' && path.split("\\.").length == 0) {
