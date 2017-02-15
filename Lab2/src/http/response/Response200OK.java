@@ -19,7 +19,7 @@ public class Response200OK extends Response {
 	}
 	
 	@Override
-	public void sendResponse() throws InternalServerException {
+	public void write() throws InternalServerException {
 		String[] parts = file.getName().split("\\.");
 		super.writeHeader(RESPONSE, file.length(), parts[parts.length - 1]);
 		writeFile();

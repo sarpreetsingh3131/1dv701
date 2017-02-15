@@ -10,12 +10,8 @@ import http.exceptions.InternalServerException;
 public abstract class Response {
 
 	protected enum ContentType {
-		texthtml("text/html", "html, htm"), 
-		textcss("text/css", "css"), 
-		textjavascript("text/javascript", "js"), 
-		imagepng("image/png", "png"), 
-		imagegif("image/gif", "gif"), 
-		imagejpeg("image/jpeg", "jpg, jpeg"), 
+		texthtml("text/html", "html, htm"), textcss("text/css", "css"), textjavascript("text/javascript", "js"), 
+		imagepng("image/png", "png"), imagegif("image/gif", "gif"), imagejpeg("image/jpeg", "jpg, jpeg"), 
 		applicationunknown("application/unknown", "*");
 
 		private String value;
@@ -33,10 +29,11 @@ public abstract class Response {
 		this.socket = socket;
 	}
 
-	public abstract void sendResponse() throws InternalServerException;
+	public abstract void write() throws InternalServerException;
 
 	protected void writeHeader(String header, long length, String fileExtension) throws InternalServerException {
-		header += getContentLengthAndType(length, fileExtension) + "Date: " + new Date().toString() + "\r\n\r\n";
+		header += "Date: " + new Date().toString() + "\r\n";
+		header += getContentLengthAndType(length, fileExtension) + "\r\n";
 		try {
 			PrintWriter printer = new PrintWriter(socket.getOutputStream(), true);
 			printer.write(header);

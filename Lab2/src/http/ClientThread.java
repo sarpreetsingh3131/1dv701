@@ -5,23 +5,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import http.exceptions.InternalServerException;
-import http.exceptions.UnknownRequestException;
+import http.exceptions.VersionNotSupportedException;
+import http.exceptions.BadRequestException;
 import http.response.Response;
 import http.response.ResponseFactory;
 
 public class ClientThread extends Thread {
 
 	private final Socket socket;
-	@SuppressWarnings("unused")
-	private final int clientId;
 	private ResponseFactory responseFactory;
 	private Request request;
 	private byte[] buffer;
-	private final int TIME_OUT = 10000;
 
-	public ClientThread(Socket socket, int clientId) {
+	public ClientThread(Socket socket) {
 		this.socket = socket;
-		this.clientId = clientId;
 		request = new Request();
 		buffer = new byte[8192];
 		responseFactory = new ResponseFactory(new SharedFolder(), this.socket, this.buffer);
@@ -31,15 +28,15 @@ public class ClientThread extends Thread {
 	public void run() {
 		while (true) {
 			try {
-				socket.setSoTimeout(TIME_OUT);
-				String userRequest = readRequest(new BufferedReader(new InputStreamReader(socket.getInputStream())));
-				Response response = responseFactory.getResponse(request.parseRequest(userRequest));
-				response.sendResponse();
-			} catch (InternalServerException | IOException e) {
+				responseFactory.getResponse(request.parseRequest(readRequest())).write();
+			} catch (InternalServerException e) {
 				responseFactory.writeResponse500InternalServerError();
 				break;
-			} catch (UnknownRequestException e) {
+			} catch (BadRequestException e) {
 				responseFactory.writeResponse400BadRequest();
+				break;
+			} catch (VersionNotSupportedException e) {
+				responseFactory.writeResponse505HTTPVersionNotSupported();
 				break;
 			}
 		}
@@ -51,21 +48,24 @@ public class ClientThread extends Thread {
 		}
 	}
 
-	private String readRequest(BufferedReader reader) throws IOException {
-		StringBuilder content = new StringBuilder();
+	private String readRequest() throws BadRequestException, InternalServerException {
+		try {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			StringBuilder content = new StringBuilder();	
+			while (true) {
+				String line = reader.readLine();
+				if (line == null) {
+					throw new BadRequestException();
+				}
+				content.append(line + "\r\n");
 
-		while (true) {
-			String line = reader.readLine();
-
-			if (line == null) {
-				throw new IOException();
+				if (line.equals("\r\n") || line.isEmpty() || line.equals("")) {
+					break;
+				}
 			}
-			content.append(line + "\r\n");
-
-			if (line.equals("\r\n") || line.isEmpty() || line.equals("")) {
-				break;
-			}
+			return content.toString();
+		} catch (IOException e) {
+			throw new InternalServerException();
 		}
-		return content.toString();
 	}
 }

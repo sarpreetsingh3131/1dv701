@@ -1,6 +1,6 @@
 package http;
 
-import http.exceptions.UnknownRequestException;
+import http.exceptions.BadRequestException;
 
 public class Header {
 
@@ -34,9 +34,9 @@ public class Header {
 		this.type = type;
 	}
 
-	public Header getHeader(String header) throws UnknownRequestException {
+	public Header getHeader(String header) throws BadRequestException {
 		if (header.split(": ").length != 2) {
-			throw new UnknownRequestException("(Incorrect header: " + header + ")");
+			throw new BadRequestException();
 		}
 		for (Type type : Type.values()) {
 			if (header.startsWith(type.type)) {

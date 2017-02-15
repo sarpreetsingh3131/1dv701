@@ -20,7 +20,8 @@ public class ResponseFactory {
 	}
 
 	public Response getResponse(Request request) {
-		if (request.getRequestType() == Request.Type.GET) {
+		switch (request.getRequestType()) {
+		case GET:
 			try {
 				File file = sharedFolder.getFile(request.getPath());
 				return new Response200OK(file, socket, buffer);
@@ -29,8 +30,9 @@ public class ResponseFactory {
 			} catch (SecurityException e) {
 				return new Response403Forbidden(socket);
 			}
+		default:
+			return new Response501NotImplemented(socket);
 		}
-		return new Response405MethodNotSupported(request.getRequestType(), socket);
 	}
 
 	public void writeResponse400BadRequest() {
@@ -40,10 +42,14 @@ public class ResponseFactory {
 	public void writeResponse500InternalServerError() {
 		write(new Response500InternalServerError(socket));
 	}
+	
+	public void writeResponse505HTTPVersionNotSupported() {
+		write(new Response505HTTPVersionNotSupported(socket));
+	}
 
 	private void write(Response response) {
 		try {
-			response.sendResponse();
+			response.write();
 		} catch (InternalServerException e) {
 			e.printStackTrace();
 		}

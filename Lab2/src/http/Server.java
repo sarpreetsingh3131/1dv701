@@ -7,8 +7,7 @@ import java.net.Socket;
 public class Server {
 
 	final static int PORT = 8080;
-	static int clientId = 0;
-
+	
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException {
 
@@ -22,7 +21,7 @@ public class Server {
 
 		while (true) {
 			Socket socket = serverSocket.accept();
-			ClientThread client = new ClientThread(socket, ++clientId);
+			ClientThread client = new ClientThread(socket);
 			client.start();
 		}
 	}
