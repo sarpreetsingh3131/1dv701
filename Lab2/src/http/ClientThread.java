@@ -7,7 +7,6 @@ import java.net.Socket;
 import http.exceptions.InternalServerException;
 import http.exceptions.VersionNotSupportedException;
 import http.exceptions.BadRequestException;
-import http.response.Response;
 import http.response.ResponseFactory;
 
 public class ClientThread extends Thread {
