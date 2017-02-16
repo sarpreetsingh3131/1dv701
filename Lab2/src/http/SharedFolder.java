@@ -2,12 +2,13 @@ package http;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import http.exceptions.UnavailableForLegalReasonsException;
 
 public class SharedFolder {
 
 	private File sharedDirectory = new File("src/http/resources/inner");
 
-	public synchronized File getFile(String path) throws FileNotFoundException {
+	public synchronized File getFile(String path) throws FileNotFoundException, UnavailableForLegalReasonsException {
 		if (path.endsWith("htm")) {
 			path += "l";
 		} else if (path.charAt(path.length() - 1) != '/' && path.split("\\.").length == 0) {
@@ -28,6 +29,11 @@ public class SharedFolder {
 		if (file.exists() && file.getName().equals("secret.html")) {
 			throw new SecurityException();
 		}
+		
+		if(file.exists() && file.getName().equals("legal.html")) {
+			throw new UnavailableForLegalReasonsException();
+		}
+		
 		if (file.exists()) {
 			return file;
 		}
