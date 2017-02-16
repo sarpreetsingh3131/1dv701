@@ -4,18 +4,17 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Date;
-
 import http.exceptions.InternalServerException;
 
 public abstract class Response {
 	
-	protected final String RESPONSE;
-	protected final String CONTENT;
-	protected final String EXTENSION;
-
-	protected enum ContentType {
-		texthtml("text/html", "html, htm"), textcss("text/css", "css"), textjavascript("text/javascript", "js"), 
-		imagepng("image/png", "png"), imagegif("image/gif", "gif"), imagejpeg("image/jpeg", "jpg, jpeg"), 
+	private enum ContentType {
+		texthtml("text/html", "html, htm"), 
+		textcss("text/css", "css"), 
+		textjavascript("text/javascript", "js"), 
+		imagepng("image/png", "png"), 
+		imagegif("image/gif", "gif"), 
+		imagejpeg("image/jpeg", "jpg, jpeg"), 
 		applicationunknown("application/unknown", "*");
 
 		private String value;
@@ -26,37 +25,39 @@ public abstract class Response {
 			this.extensions = extensions.split(", ");
 		}
 	}
-
+	
+	private String response;
+	private final String CONTENT;
+	private final String EXTENSION = "html";
 	protected Socket socket;
 
-	public Response(Socket socket, String RESPONSE, String CONTENT, String EXTENSION) {
-		this.RESPONSE = "HTTP/1.1 "+RESPONSE+"\r\n";
-		this.CONTENT = "<html><body><h1>"+CONTENT+"</h1></body></html>";
-		this.EXTENSION = EXTENSION;
-		
+	public Response(Socket socket, String response) {
+		this.response = "HTTP/1.1 " + response + "\r\n";
+		this.CONTENT = "<html><body><h1>" + response + "</h1></body></html>";
 		this.socket = socket;
 	}
 
 	public void write() throws InternalServerException{
-		writeHeader(RESPONSE, CONTENT.getBytes().length, EXTENSION);
-		writeContent(CONTENT);
-	};
+		writeHeader(CONTENT.getBytes().length, EXTENSION);
+		writeContent();
+	}
 
-	protected void writeHeader(String header, long length, String fileExtension) throws InternalServerException {
-		header += "Date: " + new Date().toString() + "\r\n";
-		header += getContentLengthAndType(length, fileExtension) + "\r\n";
+	protected void writeHeader(long length, String fileExtension) throws InternalServerException {
+		response += "Date: " + new Date().toString() + "\r\n";
+		response += getContentLengthAndType(length, fileExtension) + "\r\n";
+		
 		try {
 			PrintWriter printer = new PrintWriter(socket.getOutputStream(), true);
-			printer.write(header);
+			printer.write(response);
 			printer.flush();
 		} catch (Exception e) {
 			throw new InternalServerException();
 		}
 	}
 
-	protected void writeContent(String content) throws InternalServerException {
+	private void writeContent() throws InternalServerException {
 		try {
-			socket.getOutputStream().write(content.getBytes());
+			socket.getOutputStream().write(CONTENT.getBytes());
 		} catch (IOException e) {
 			throw new InternalServerException();
 		}

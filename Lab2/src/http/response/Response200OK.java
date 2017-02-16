@@ -12,7 +12,7 @@ public class Response200OK extends Response {
 	private byte[] buffer;
 
 	public Response200OK(File file, Socket socket, byte[] buffer) {
-		super(socket, "200 OK","","");
+		super(socket, "200 OK");
 		this.file = file;
 		this.buffer = buffer;
 	}
@@ -20,7 +20,7 @@ public class Response200OK extends Response {
 	@Override
 	public void write() throws InternalServerException {
 		String[] parts = file.getName().split("\\.");
-		super.writeHeader(RESPONSE, file.length(), parts[parts.length - 1]);
+		super.writeHeader(file.length(), parts[parts.length - 1]);
 		writeFile();
 	}
 

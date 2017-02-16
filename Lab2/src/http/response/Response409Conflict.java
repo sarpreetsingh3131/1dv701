@@ -5,7 +5,7 @@ import java.net.Socket;
 public class Response409Conflict extends Response {
 	
 	public Response409Conflict(Socket socket) {
-		super(socket,"409 Conflict", "409 Conflict","html");
+		super(socket,"409 Conflict");
 	}
 
 }
