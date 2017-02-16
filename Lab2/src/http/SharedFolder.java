@@ -25,7 +25,7 @@ public class SharedFolder {
 			}
 		}
 
-		if (file.exists() && file.getName().contains("secret.html")) {
+		if (file.exists() && file.getName().equals("secret.html")) {
 			throw new SecurityException();
 		}
 		if (file.exists()) {
