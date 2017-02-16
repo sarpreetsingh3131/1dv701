@@ -30,6 +30,9 @@ public class ClientThread extends Thread {
 		while (true) {
 			try {
 				socket.setSoTimeout(9000);
+				if (!Server.SERVER_UP) {
+					throw new ServiceUnavailableException();
+				}
 				responseFactory.getResponse(request.parseRequest(readRequest())).write();
 			} catch (SocketException | InternalServerException e) {
 				responseFactory.writeResponse500InternalServerError();
@@ -48,18 +51,16 @@ public class ClientThread extends Thread {
 
 		try {
 			socket.close();
-			Server.connections--;
 		} catch (IOException e) {
 			responseFactory.writeResponse500InternalServerError();
 		}
 	}
 
-	private String readRequest() throws BadRequestException, InternalServerException, ServiceUnavailableException {
+	private String readRequest() throws BadRequestException, InternalServerException {
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			StringBuilder content = new StringBuilder();
-			
-			if(Server.connections < 3){
+
 			while (true) {
 				String line = reader.readLine();
 				if (line == null) {
@@ -71,11 +72,6 @@ public class ClientThread extends Thread {
 					break;
 				}
 			}
-			}else{
-				throw new ServiceUnavailableException();
-			}
-			
-			
 			return content.toString();
 		} catch (IOException e) {
 			throw new InternalServerException();

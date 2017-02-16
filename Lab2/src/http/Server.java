@@ -6,9 +6,9 @@ import java.net.Socket;
 
 public class Server {
 
-	final static int PORT = 8080;
-	public static int connections = 0;
-	
+	public final static int PORT = 8080;
+	public final static boolean SERVER_UP = true;
+
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException {
 
@@ -22,7 +22,6 @@ public class Server {
 
 		while (true) {
 			Socket socket = serverSocket.accept();
-			connections++;
 			ClientThread client = new ClientThread(socket);
 			client.start();
 		}
