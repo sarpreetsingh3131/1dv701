@@ -45,10 +45,7 @@ public class ClientThread extends Thread {
 			} catch (VersionNotSupportedException e) {
 				responseFactory.writeResponse505HTTPVersionNotSupported();
 				break;
-			} catch (ServiceUnavailableException e) {
-				responseFactory.writeResponse503ServiceUnavailable();
-				break;
-			} catch (SocketException e) {
+			} catch (ServiceUnavailableException | SocketException e) {
 				responseFactory.writeResponse503ServiceUnavailable();
 				break;
 			} catch (RequestTimeoutException e) {
