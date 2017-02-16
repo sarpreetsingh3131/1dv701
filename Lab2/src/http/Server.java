@@ -7,7 +7,7 @@ import java.net.Socket;
 public class Server {
 
 	public final static int PORT = 8080;
-	public final static boolean UNDER_MAINTAINENCE = true;
+	public final static boolean UNDER_MAINTAINENCE = false;
 
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException {
