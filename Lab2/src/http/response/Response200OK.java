@@ -10,10 +10,9 @@ public class Response200OK extends Response {
 
 	private final File file;
 	private byte[] buffer;
-	private final String RESPONSE = "HTTP/1.1 200 OK\r\n";
 
 	public Response200OK(File file, Socket socket, byte[] buffer) {
-		super(socket);
+		super(socket, "200 OK","","");
 		this.file = file;
 		this.buffer = buffer;
 	}

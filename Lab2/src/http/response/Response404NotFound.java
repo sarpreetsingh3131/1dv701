@@ -1,21 +1,11 @@
 package http.response;
 
 import java.net.Socket;
-import http.exceptions.InternalServerException;
 
 public class Response404NotFound extends Response {
 
-	private final String RESPONSE = "HTTP/1.1 404 Not Found\r\n";
-	private final String CONTENT = "<html><body><h1>404 Not Found</h1></body></html>";
-	private final String EXTENSION = "html";
-
 	public Response404NotFound(Socket socket) {
-		super(socket);
+		super(socket, "404 Not Found", "404 Not Found", "html");
 	}
 
-	@Override
-	public void write() throws InternalServerException {
-		super.writeHeader(RESPONSE, CONTENT.getBytes().length, EXTENSION);
-		super.writeContent(CONTENT);
-	}
 }

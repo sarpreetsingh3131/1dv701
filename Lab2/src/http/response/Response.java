@@ -8,6 +8,10 @@ import java.util.Date;
 import http.exceptions.InternalServerException;
 
 public abstract class Response {
+	
+	protected final String RESPONSE;
+	protected final String CONTENT;
+	protected final String EXTENSION;
 
 	protected enum ContentType {
 		texthtml("text/html", "html, htm"), textcss("text/css", "css"), textjavascript("text/javascript", "js"), 
@@ -25,11 +29,18 @@ public abstract class Response {
 
 	protected Socket socket;
 
-	public Response(Socket socket) {
+	public Response(Socket socket, String RESPONSE, String CONTENT, String EXTENSION) {
+		this.RESPONSE = "HTTP/1.1 "+RESPONSE+"\r\n";
+		this.CONTENT = "<html><body><h1>"+CONTENT+"</h1></body></html>";
+		this.EXTENSION = EXTENSION;
+		
 		this.socket = socket;
 	}
 
-	public abstract void write() throws InternalServerException;
+	public void write() throws InternalServerException{
+		writeHeader(RESPONSE, CONTENT.getBytes().length, EXTENSION);
+		writeContent(CONTENT);
+	};
 
 	protected void writeHeader(String header, long length, String fileExtension) throws InternalServerException {
 		header += "Date: " + new Date().toString() + "\r\n";
