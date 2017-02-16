@@ -53,7 +53,6 @@ public class ClientThread extends Thread {
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			StringBuilder content = new StringBuilder();
-			if(content.toString().isEmpty()) throw new InternalServerException();
 			
 			while (true) {
 				String line = reader.readLine();
