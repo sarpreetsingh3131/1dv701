@@ -3,6 +3,7 @@ package http.response;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.Socket;
+
 import http.Request;
 import http.SharedFolder;
 import http.exceptions.InternalServerException;
@@ -51,6 +52,9 @@ public class ResponseFactory {
 	
 	public void writeResponse505HTTPVersionNotSupported() {
 		write(new Response505HTTPVersionNotSupported(socket));
+	}
+	public void writeResponse503ServiceUnavailable() {
+		write(new Response503ServiceUnavailable(socket));
 	}
 
 	private void write(Response response) {

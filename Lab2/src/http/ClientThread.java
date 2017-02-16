@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 import http.exceptions.InternalServerException;
+import http.exceptions.ServiceUnavailableException;
 import http.exceptions.VersionNotSupportedException;
 import http.exceptions.BadRequestException;
 import http.response.ResponseFactory;
@@ -39,21 +40,26 @@ public class ClientThread extends Thread {
 			} catch (VersionNotSupportedException e) {
 				responseFactory.writeResponse505HTTPVersionNotSupported();
 				break;
+			} catch (ServiceUnavailableException e) {
+				responseFactory.writeResponse503ServiceUnavailable();
+				break;
 			}
 		}
 
 		try {
 			socket.close();
+			Server.connections--;
 		} catch (IOException e) {
 			responseFactory.writeResponse500InternalServerError();
 		}
 	}
 
-	private String readRequest() throws BadRequestException, InternalServerException {
+	private String readRequest() throws BadRequestException, InternalServerException, ServiceUnavailableException {
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			StringBuilder content = new StringBuilder();
 			
+			if(Server.connections < 3){
 			while (true) {
 				String line = reader.readLine();
 				if (line == null) {
@@ -65,6 +71,11 @@ public class ClientThread extends Thread {
 					break;
 				}
 			}
+			}else{
+				throw new ServiceUnavailableException();
+			}
+			
+			
 			return content.toString();
 		} catch (IOException e) {
 			throw new InternalServerException();
