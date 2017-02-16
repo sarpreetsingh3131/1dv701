@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 import http.exceptions.InternalServerException;
+import http.exceptions.RequestTimeoutException;
 import http.exceptions.ServiceUnavailableException;
 import http.exceptions.VersionNotSupportedException;
 import http.exceptions.BadRequestException;
@@ -17,6 +18,7 @@ public class ClientThread extends Thread {
 	private ResponseFactory responseFactory;
 	private Request request;
 	private byte[] buffer;
+	private final int TIMEOUT = 1000;
 
 	public ClientThread(Socket socket) {
 		this.socket = socket;
@@ -29,12 +31,12 @@ public class ClientThread extends Thread {
 	public void run() {
 		while (true) {
 			try {
-				socket.setSoTimeout(9000);
-				if (!Server.SERVER_UP) {
+				socket.setSoTimeout(TIMEOUT);
+				if (Server.UNDER_MAINTAINENCE) {
 					throw new ServiceUnavailableException();
 				}
 				responseFactory.getResponse(request.parseRequest(readRequest())).write();
-			} catch (SocketException | InternalServerException e) {
+			} catch (InternalServerException e) {
 				responseFactory.writeResponse500InternalServerError();
 				break;
 			} catch (BadRequestException e) {
@@ -46,6 +48,12 @@ public class ClientThread extends Thread {
 			} catch (ServiceUnavailableException e) {
 				responseFactory.writeResponse503ServiceUnavailable();
 				break;
+			} catch (SocketException e) {
+				responseFactory.writeResponse503ServiceUnavailable();
+				break;
+			} catch (RequestTimeoutException e) {
+				responseFactory.writeResponse408RequestTimeout();
+				break;
 			}
 		}
 
@@ -56,7 +64,7 @@ public class ClientThread extends Thread {
 		}
 	}
 
-	private String readRequest() throws BadRequestException, InternalServerException {
+	private String readRequest() throws BadRequestException, RequestTimeoutException {
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			StringBuilder content = new StringBuilder();
@@ -67,14 +75,13 @@ public class ClientThread extends Thread {
 					throw new BadRequestException();
 				}
 				content.append(line + "\r\n");
-
 				if (line.equals("\r\n") || line.isEmpty() || line.equals("")) {
 					break;
 				}
 			}
 			return content.toString();
 		} catch (IOException e) {
-			throw new InternalServerException();
+			throw new RequestTimeoutException();
 		}
 	}
 }

@@ -22,6 +22,11 @@ public class Request {
 
 	public Request parseRequest(String userRequest) throws BadRequestException, VersionNotSupportedException {
 		String[] totalLines = userRequest.split("\r\n");
+		
+		if(totalLines.length == 0) {
+			throw new BadRequestException();
+		}
+		
 		String[] request = totalLines[0].split(" ");
 
 		if (request.length != 3 || !request[2].split("/")[0].equals("HTTP")) {

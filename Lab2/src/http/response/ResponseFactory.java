@@ -57,6 +57,10 @@ public class ResponseFactory {
 		write(new Response503ServiceUnavailable(socket));
 	}
 	
+	public void writeResponse408RequestTimeout() {
+		write(new Response408RequestTimeout(socket));
+	}
+	
 	private void write(Response response) {
 		try {
 			response.write();
