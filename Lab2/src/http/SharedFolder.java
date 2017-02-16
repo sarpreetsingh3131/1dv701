@@ -2,13 +2,14 @@ package http;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import http.exceptions.LockedException;
 import http.exceptions.UnavailableForLegalReasonsException;
 
 public class SharedFolder {
 
 	private File sharedDirectory = new File("src/http/resources/inner");
 
-	public synchronized File getFile(String path) throws FileNotFoundException, UnavailableForLegalReasonsException {
+	public synchronized File getFile(String path) throws FileNotFoundException, UnavailableForLegalReasonsException, LockedException {
 		if (path.endsWith("htm")) {
 			path += "l";
 		} else if (path.charAt(path.length() - 1) != '/' && path.split("\\.").length == 0) {
@@ -25,18 +26,16 @@ public class SharedFolder {
 				}
 			}
 		}
-
-		if (file.exists() && file.getName().equals("secret.html")) {
-			throw new SecurityException();
+		
+		if(file.exists()) {
+			switch(file.getName()) {
+			case "secret.html": 	throw new SecurityException();
+			case "legal.html" :		throw new UnavailableForLegalReasonsException();
+			case "private.html" :	throw new LockedException();
+			default: return file;
+			}
 		}
 		
-		if(file.exists() && file.getName().equals("legal.html")) {
-			throw new UnavailableForLegalReasonsException();
-		}
-		
-		if (file.exists()) {
-			return file;
-		}
 		throw new FileNotFoundException();
 	}
 }

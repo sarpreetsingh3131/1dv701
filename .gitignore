@@ -6,3 +6,5 @@ Lab2/\.project
 Lab2/bin/
 
 Lab2/src/http/resources/inner/\.DS_Store
+
+Lab2/src/http/resources/inner/legal/\.DS_Store

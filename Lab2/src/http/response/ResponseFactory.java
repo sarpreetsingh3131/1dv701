@@ -6,6 +6,7 @@ import java.net.Socket;
 import http.Request;
 import http.SharedFolder;
 import http.exceptions.InternalServerException;
+import http.exceptions.LockedException;
 import http.exceptions.UnavailableForLegalReasonsException;
 
 public class ResponseFactory {
@@ -32,6 +33,8 @@ public class ResponseFactory {
 				return new Response403Forbidden(socket);
 			} catch (UnavailableForLegalReasonsException e) {
 				return new Response451UnavailableForLegalReasons(socket);
+			} catch (LockedException e) {
+				return new Response423Locked(socket);
 			}
 		default:
 			return new Response501NotImplemented(socket);
