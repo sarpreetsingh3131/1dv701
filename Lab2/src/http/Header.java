@@ -11,7 +11,7 @@ public class Header {
 		/*
 		 * content types.
 		 */
-		Host("Host"), ContentType("Content-Type"), ContentLength("Content-Length"), Connection(
+		Host("HOST"), ContentType("Content-Type"), ContentLength("Content-Length"), Connection(
 				"Connection"), CacheControl("Cache-Control"), Accept("Accept"), UserAgent("User-Agent"), AcceptEncoding(
 						"Accept-Encoding"), AcceptLanguage("Accept-Language"), UnknownHeader("Unknown-Header");
 
@@ -42,7 +42,7 @@ public class Header {
 		}
 		// Returns if it can find the type.
 		for (Type type : Type.values()) {
-			if (header.startsWith(type.type)) {
+			if (header.toUpperCase().startsWith(type.type)) {
 				return new Header(header.split(":")[1], type);
 			}
 		}
