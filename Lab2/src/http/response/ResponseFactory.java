@@ -9,19 +9,25 @@ import http.exceptions.InternalServerException;
 import http.exceptions.LockedException;
 import http.exceptions.UnavailableForLegalReasonsException;
 
+/*
+ * This class returns Responses depending request.
+ */
 public class ResponseFactory {
 
 	private SharedFolder sharedFolder;
 	private Socket socket;
 	private byte[] buffer;
 
+	// Sets the directory to get the files from, socket and buffer.
 	public ResponseFactory(SharedFolder sharedFolder, Socket socket, byte[] buffer) {
 		this.sharedFolder = sharedFolder;
 		this.socket = socket;
 		this.buffer = buffer;
 	}
 
+	// Gets a response.
 	public Response getResponse(Request request) {
+		// returns depending on the request type.
 		switch (request.getRequestType()) {
 		case GET:
 			try {
@@ -36,6 +42,13 @@ public class ResponseFactory {
 			} catch (LockedException e) {
 				return new Response423Locked(socket);
 			}
+		case POST:
+
+			return new Response200OK(socket);
+
+		case PUT:
+			// if not the request type is implemented then return a 501
+			// response.
 		default:
 			return new Response501NotImplemented(socket);
 		}
@@ -48,19 +61,20 @@ public class ResponseFactory {
 	public void writeResponse500InternalServerError() {
 		write(new Response500InternalServerError(socket));
 	}
-	
+
 	public void writeResponse505HTTPVersionNotSupported() {
 		write(new Response505HTTPVersionNotSupported(socket));
 	}
-	
+
 	public void writeResponse503ServiceUnavailable() {
 		write(new Response503ServiceUnavailable(socket));
 	}
-	
+
 	public void writeResponse408RequestTimeout() {
 		write(new Response408RequestTimeout(socket));
 	}
-	
+
+	// writes the response.
 	private void write(Response response) {
 		try {
 			response.write();
