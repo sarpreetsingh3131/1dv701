@@ -1,13 +1,13 @@
 package http.response;
 
-import java.net.Socket;
+import http.ClientThread;
 
 /*
  * This class forms the specific 403 response.
  */
 public class Response403Forbidden extends Response {
 
-	public Response403Forbidden(Socket socket) {
-		super(socket, "403 Forbidden");
+	public Response403Forbidden(ClientThread client) {
+		super(client, "403 Forbidden");
 	}
 }

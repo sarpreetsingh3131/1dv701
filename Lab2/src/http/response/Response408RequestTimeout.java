@@ -1,13 +1,13 @@
 package http.response;
 
-import java.net.Socket;
+import http.ClientThread;
 
 /*
  * This class forms the specific 408 response.
  */
 public class Response408RequestTimeout extends Response {
 
-	public Response408RequestTimeout(Socket socket) {
-		super(socket, "408 Request Time-out");
+	public Response408RequestTimeout(ClientThread client) {
+		super(client, "408 Request Time-out");
 	}
 }

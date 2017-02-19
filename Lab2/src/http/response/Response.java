@@ -2,8 +2,8 @@ package http.response;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.Socket;
 import java.util.Date;
+import http.ClientThread;
 import http.exceptions.InternalServerException;
 
 /*
@@ -34,13 +34,13 @@ public abstract class Response {
 	private String response;
 	private final String CONTENT;
 	private final String EXTENSION = "html";
-	protected Socket socket;
+	protected ClientThread client;
 
 	// Forms the response.
-	public Response(Socket socket, String response) {
+	public Response(ClientThread client, String response) {
 		this.response = "HTTP/1.1 " + response + "\r\n";
 		this.CONTENT = "<html><body><h1>" + response + "</h1></body></html>";
-		this.socket = socket;
+		this.client = client;
 	}
 
 	// Write/sends the response.
@@ -57,7 +57,7 @@ public abstract class Response {
 		
 		// Sends the header.
 		try {
-			PrintWriter printer = new PrintWriter(socket.getOutputStream(), true);
+			PrintWriter printer = new PrintWriter(client.getSocket().getOutputStream(), true);
 			printer.write(response);
 			printer.flush();
 		} catch (Exception e) {
@@ -68,7 +68,7 @@ public abstract class Response {
 	// Sends the content body.
 	private void writeContent() throws InternalServerException {
 		try {
-			socket.getOutputStream().write(CONTENT.getBytes());
+			client.getSocket().getOutputStream().write(CONTENT.getBytes());
 		} catch (IOException e) {
 			throw new InternalServerException();
 		}

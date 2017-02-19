@@ -18,19 +18,20 @@ public class ClientThread extends Thread {
 	private ResponseFactory responseFactory;
 	private Request request;
 	private byte[] buffer;
-	private final int TIMEOUT = 10;
+	private final int TIMEOUT = 100000;
+	private final int clientId;
 
-	public ClientThread(Socket socket) {
+	public ClientThread(Socket socket, int clientId) {
 		this.socket = socket;
 		request = new Request();
 		buffer = new byte[8192];
-
-		// creating response factory including the shared directory.
-		responseFactory = new ResponseFactory(new SharedFolder(), this.socket, this.buffer);
+		this.clientId = clientId;
+		responseFactory = new ResponseFactory(this);
 	}
 
 	@Override
 	public void run() {
+		System.out.println("Client " + clientId + " connected");
 		// A loop processing all the requests made by client
 		while (true) {
 			try {
@@ -55,13 +56,28 @@ public class ClientThread extends Thread {
 				responseFactory.writeResponse408RequestTimeout();
 				break;
 			}
+			if(request.connectionClosed()) 
+				break;
 		}
-
+		
 		try {
 			// closing socket.
 			socket.close();
 		} catch (IOException e) {
 			responseFactory.writeResponse500InternalServerError();
 		}
+		System.out.println("Client " + clientId + " disconnected");
+	}
+	
+	public Socket getSocket() {
+		return socket;
+	}
+	
+	public byte[] getBuffer() {
+		return buffer;
+	}
+	
+	public int getClientId() {
+		return clientId;
 	}
 }

@@ -11,8 +11,6 @@ public class Server {
 
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException {
-
-		// Creates server with port.
 		ServerSocket serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(PORT);
@@ -20,12 +18,15 @@ public class Server {
 			System.out.println("ERROR: PORT IS IN USE!!");
 			System.exit(1);
 		}
-
+		
+		System.out.println("Server started");
+		int clientId = 0;
+		
 		// Waits for connections to accept.
 		while (true) {
 			Socket socket = serverSocket.accept();
 			// After accepting a new client thread is created for the client.
-			ClientThread client = new ClientThread(socket);
+			ClientThread client = new ClientThread(socket, ++clientId);
 			client.start();
 		}
 	}

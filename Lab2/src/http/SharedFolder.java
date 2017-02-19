@@ -11,7 +11,7 @@ import http.exceptions.UnavailableForLegalReasonsException;
  */
 public class SharedFolder {
 
-	private File sharedDirectory = new File("src/http/resources/inner");
+	private final File SHARED_FOLDER = new File("src/http/resources/inner");
 
 	// Return the file for the path.
 	public synchronized File getFile(String path) throws FileNotFoundException, UnavailableForLegalReasonsException, LockedException, InternalServerException {
@@ -29,7 +29,7 @@ public class SharedFolder {
 			path += "/";
 		}
 	
-		File file = new File(sharedDirectory, path);
+		File file = new File(SHARED_FOLDER, path);
 		
 		if (file.isDirectory()) {
 			throw new InternalServerException();
