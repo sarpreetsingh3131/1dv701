@@ -20,12 +20,6 @@ public class Response200OK extends Response {
 		this.file = file;
 		this.buffer = buffer;
 	}
-	
-	// Without file.
-	public Response200OK(Socket socket) {
-		super(socket, "200 OK");
-		file = null;
-	}
 
 	// Overrides the write method to also write a file.
 	@Override

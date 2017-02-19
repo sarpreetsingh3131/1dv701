@@ -41,14 +41,9 @@ public class ResponseFactory {
 				return new Response451UnavailableForLegalReasons(socket);
 			} catch (LockedException e) {
 				return new Response423Locked(socket);
+			} catch (InternalServerException e) {
+				return new Response500InternalServerError(socket);
 			}
-		case POST:
-
-			return new Response200OK(socket);
-
-		case PUT:
-			// if not the request type is implemented then return a 501
-			// response.
 		default:
 			return new Response501NotImplemented(socket);
 		}

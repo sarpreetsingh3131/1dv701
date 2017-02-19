@@ -1,8 +1,12 @@
 package http;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
 import http.exceptions.BadRequestException;
+import http.exceptions.InternalServerException;
+import http.exceptions.RequestTimeoutException;
 import http.exceptions.VersionNotSupportedException;
 
 /*
@@ -10,12 +14,11 @@ import http.exceptions.VersionNotSupportedException;
  */
 public class Request {
 
-	//Request types.
+	// Request types.
 	public enum Type {GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH}
-	
 	private Type type;
 	private String path;
-	private final String HTTP_VERSION = "1.1";
+	private final String HTTP_VERSION = "HTTP/1.1";
 
 	private Request(Type type, String path) {
 		this.type = type;
@@ -25,50 +28,58 @@ public class Request {
 	public Request() {
 	}
 
-	
-	 // Takes the request as string and reads its contents and creates a new request.
-	 // Returns exceptions if the request is bad.
-	 
-	public Request parseRequest(String userRequest) throws BadRequestException, VersionNotSupportedException {
-		//splits header types.
-		String[] totalLines = userRequest.split("\r\n");
+	public Request parseRequest(Socket socket, int timeout)
+			throws BadRequestException, VersionNotSupportedException, RequestTimeoutException, InternalServerException {
+		
+		String userRequest = readRequest(socket, timeout);
 
-		// If content length is 0 then throw 400.
-		if (totalLines.length == 0) {
-			throw new BadRequestException();
-		}
+		// splits header types.
+		String[] totalLines = userRequest.split("\r\n");
 		
 		// splits first line.
 		String[] request = totalLines[0].split(" ");
-		// Checks if it contains HTTP and length of 3, if not then throw 400.
-		if (request.length != 3 || !request[2].split("/")[0].equals("HTTP")) {
+
+		// Checks if length is 3 (GET / HTTP/1.1), if not then throw 400.
+		if (request.length != 3) {
 			throw new BadRequestException();
 		}
+		
 		// Checks the right HTTP version or throw 505.
-		if(!request[2].split("/")[1].equals(HTTP_VERSION)) {
+		if (!request[2].equals(HTTP_VERSION)) {
 			throw new VersionNotSupportedException();
 		}
-		
-		// A map to store headers.
-		Header header = new Header();
-		Map<Header.Type, Header> headers = new HashMap<>();
-		
-		// Fill the map with headers.
-		for (int i = 1; i < totalLines.length; i++) {
-			Header h = header.getHeader(totalLines[i]);
-			headers.put(h.getType(), h);
-		}
-		// Checks if the header contains type HOST, if not then throw 400.
-		if (!headers.containsKey(Header.Type.Host)) {
-			throw new BadRequestException();
-		}
-		
-		// Return a new request with type and path.
+
 		return new Request(getType(request[0]), request[1]);
 	}
 
-	
-	 // Gets the type that is to be set. 
+	// Reads request, sends it back as String.
+	private String readRequest(Socket socket, int timeout) throws RequestTimeoutException, InternalServerException {
+		long time = 0;
+		try {
+			time = System.currentTimeMillis();
+			socket.setSoTimeout(timeout);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			StringBuilder content = new StringBuilder();
+
+			// Reads until there is no more to read.
+			while (true) {
+				String line = reader.readLine();
+				if (line == null || line.equals("\r\n") || line.isEmpty() || line.equals("")) {
+					break;
+				}
+				content.append(line + "\r\n");
+			}
+			
+			return content.toString();
+		} catch (IOException e) {
+			if (System.currentTimeMillis() - time > timeout) {
+				throw new RequestTimeoutException();
+			}
+			throw new InternalServerException();
+		}
+	}
+
+	// Gets the type that is to be set.
 	private Type getType(String type) throws BadRequestException {
 		for (Type t : Type.values()) {
 			if (type.equals(t.name())) {

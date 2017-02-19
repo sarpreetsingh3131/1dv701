@@ -2,6 +2,7 @@ package http;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import http.exceptions.InternalServerException;
 import http.exceptions.LockedException;
 import http.exceptions.UnavailableForLegalReasonsException;
 
@@ -12,39 +13,38 @@ public class SharedFolder {
 
 	private File sharedDirectory = new File("src/http/resources/inner");
 
-	
 	// Return the file for the path.
-	public synchronized File getFile(String path) throws FileNotFoundException, UnavailableForLegalReasonsException, LockedException {
-		// Checks path to correctly return the index file.
-		if (path.endsWith("htm")) {
+	public synchronized File getFile(String path) throws FileNotFoundException, UnavailableForLegalReasonsException, LockedException, InternalServerException {
+		//default file
+		if(path.equals("/")) {
+			path += "index.html";
+		}
+		
+		else if (path.endsWith("htm")) {
 			path += "l";
-		} else if (path.charAt(path.length() - 1) != '/' && path.split("\\.").length == 0) {
+		} 
+		
+		//If path does not ends with back slash and contains no dot(.) 
+		else if (path.charAt(path.length() - 1) != '/' && path.split("\\.").length == 0) {
 			path += "/";
 		}
-		// Opens file
+	
 		File file = new File(sharedDirectory, path);
-		// Checks if file is directory..
+		
 		if (file.isDirectory()) {
-			// Checks for htm/html files inside the directory.
-			for (int i = 0; i < file.listFiles().length; i++) {
-				if (file.listFiles()[i].getName().contains("htm")) {
-					file = file.listFiles()[i];
-					break;
-				}
-			}
+			throw new InternalServerException();
 		}
 		
 		// If file exists then checks for certain restrictions, if not then throw 404.
 		if(file.exists()) {
-			// Checks the 403, 451 and 423, otherwise return the file.
-			switch(file.getName()) {
-			case "secret.html": 	throw new SecurityException();
-			case "legal.html" :		throw new UnavailableForLegalReasonsException();
-			case "private.html" :	throw new LockedException();
+			//All files(even if add new one) in these folder must show correct response
+			switch(file.getParent()) {
+			case "src/http/resources/inner/secret": 	throw new SecurityException();
+			case "src/http/resources/inner/legal":		throw new UnavailableForLegalReasonsException();
+			case "src/http/resources/inner/private":	throw new LockedException();
 			default: return file;
 			}
 		}
-		
 		throw new FileNotFoundException();
 	}
 }
