@@ -3,9 +3,8 @@ package http.response;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import http.ClientThread;
-import http.PostMethod;
 import http.Request;
-import http.SharedFolder;
+import http.Method;
 import http.exceptions.InternalServerException;
 import http.exceptions.LockedException;
 import http.exceptions.UnavailableForLegalReasonsException;
@@ -16,13 +15,11 @@ import http.exceptions.UnsupportedMediaTypeException;
  */
 public class ResponseFactory {
 
-	private SharedFolder sharedFolder;
+	private Method method;
 	private ClientThread client;
-	private PostMethod post;
 	
 	public ResponseFactory(ClientThread client) {
-		sharedFolder = new SharedFolder();
-		post = new PostMethod();
+		method = new Method();
 		this.client = client;
 	}
 
@@ -30,7 +27,7 @@ public class ResponseFactory {
 		switch (request.getMethod()) {
 		case GET:
 			try {
-				return new Response200OK(client, sharedFolder.getFile(request.getPath()));
+				return new Response200OK(client, method.GET(request.getPath()));
 			} catch (FileNotFoundException e) {
 				return new Response404NotFound(client);
 			} catch (SecurityException e) {
@@ -44,7 +41,7 @@ public class ResponseFactory {
 			}
 		case POST:
 			try {
-				post.saveFile(request.getBody(), sharedFolder.getImagesFolder());
+				method.POST(request.getBody());
 				return new Response201Created(client);
 			} catch (IOException e) {
 				return new Response500InternalServerError(client);
