@@ -3,6 +3,7 @@ package http;
 import java.io.IOException;
 import java.net.Socket;
 import http.exceptions.InternalServerException;
+import http.exceptions.RequestEntityTooLargeException;
 import http.exceptions.RequestTimeoutException;
 import http.exceptions.ServiceUnavailableException;
 import http.exceptions.VersionNotSupportedException;
@@ -18,13 +19,13 @@ public class ClientThread extends Thread {
 	private ResponseFactory responseFactory;
 	private Request request;
 	private byte[] buffer;
-	private final int TIMEOUT = 100000;
+	private final int TIMEOUT = 5000;
 	private final int clientId;
 
 	public ClientThread(Socket socket, int clientId) {
 		this.socket = socket;
 		request = new Request();
-		buffer = new byte[8192];
+		buffer = new byte[9000];
 		this.clientId = clientId;
 		responseFactory = new ResponseFactory(this);
 	}
@@ -40,7 +41,7 @@ public class ClientThread extends Thread {
 					throw new ServiceUnavailableException();
 				}
 				responseFactory.getResponse(request.parseRequest(socket, TIMEOUT)).write();
-			} catch (InternalServerException e) {
+			} catch (IOException | InternalServerException e) {
 				responseFactory.writeResponse500InternalServerError();
 				break;
 			} catch (BadRequestException e) {
@@ -54,6 +55,9 @@ public class ClientThread extends Thread {
 				break;
 			} catch (RequestTimeoutException e) {
 				responseFactory.writeResponse408RequestTimeout();
+				break;
+			} catch (RequestEntityTooLargeException e) {
+				responseFactory.writeResponse413RequestEntityTooLarge();
 				break;
 			}
 			if(request.connectionClosed()) 

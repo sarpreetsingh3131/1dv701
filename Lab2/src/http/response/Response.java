@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
 import http.ClientThread;
-import http.exceptions.InternalServerException;
 
 /*
  * This class consist of one Response and ability to send it.
@@ -44,34 +43,27 @@ public abstract class Response {
 	}
 
 	// Write/sends the response.
-	public void write() throws InternalServerException{
+	public void write() throws IOException {
 		writeHeader(CONTENT.getBytes().length, EXTENSION);
 		writeContent();
 	}
 
 	// Forms the header.
-	protected void writeHeader(long length, String fileExtension) throws InternalServerException {
+	protected void writeHeader(long length, String fileExtension) throws IOException {
 		// Includes date, content length and type.
 		response += "Date: " + new Date().toString() + "\r\n";
 		response += getContentLengthAndType(length, fileExtension) + "\r\n";
 		
 		// Sends the header.
-		try {
 			PrintWriter printer = new PrintWriter(client.getSocket().getOutputStream(), true);
 			printer.write(response);
 			printer.flush();
-		} catch (Exception e) {
-			throw new InternalServerException();
-		}
 	}
 
 	// Sends the content body.
-	private void writeContent() throws InternalServerException {
-		try {
-			client.getSocket().getOutputStream().write(CONTENT.getBytes());
-		} catch (IOException e) {
-			throw new InternalServerException();
-		}
+	private void writeContent() throws IOException {
+		client.getSocket().getOutputStream().write(CONTENT.getBytes());
+		
 	}
 	
 	// Returns the content length plus the type.
