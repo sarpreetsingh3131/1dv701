@@ -15,6 +15,9 @@
 	<img src="images/img2.png" />
 	<img src="images/img3.png" />
 	<img src="images/img4.png" />
+	<img src="images/img5.png" />
+	<img src="images/img6.png" />
+	
 	
 	<!-- https://thiscouldbebetter.wordpress.com/2013/07/03/converting-a-file-to-a-base64-dataurl-in-javascript/ -->	
 		<script type="text/javascript">
@@ -24,12 +27,12 @@
         			var fileToLoad = filesSelected[0];
 					var fileReader = new FileReader();
  					fileReader.onload = function(fileLoadedEvent) {
-            			var content = document.getElementById("contents");
-            			content.value = fileLoadedEvent.target.result;
+            		var content = document.getElementById("contents");
+            		content.value = fileLoadedEvent.target.result;
         			};
  					fileReader.readAsDataURL(fileToLoad);
  				}
 			}
-		</script>
+		 </script>
 </body>
 </html>

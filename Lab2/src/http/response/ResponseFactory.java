@@ -1,6 +1,5 @@
 package http.response;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import http.ClientThread;
@@ -23,18 +22,15 @@ public class ResponseFactory {
 	
 	public ResponseFactory(ClientThread client) {
 		sharedFolder = new SharedFolder();
-		post = new PostMethod(sharedFolder);
+		post = new PostMethod();
 		this.client = client;
 	}
 
-	// Gets a response.
 	public Response getResponse(Request request) {
-		// returns depending on the request type.
 		switch (request.getMethod()) {
 		case GET:
 			try {
-				File file = sharedFolder.getFile(request.getPath());
-				return new Response200OK(client, file);
+				return new Response200OK(client, sharedFolder.getFile(request.getPath()));
 			} catch (FileNotFoundException e) {
 				return new Response404NotFound(client);
 			} catch (SecurityException e) {
@@ -48,14 +44,13 @@ public class ResponseFactory {
 			}
 		case POST:
 			try {
-				post.saveFile(request);
+				post.saveFile(request.getBody(), sharedFolder.getImagesFolder());
 				return new Response201Created(client);
 			} catch (IOException e) {
-				e.printStackTrace();
 				return new Response500InternalServerError(client);
 			} catch (UnsupportedMediaTypeException e) {
 				return new Response415UnsupportedMediaType(client);
-			}
+			} 
 		default:
 			return new Response501NotImplemented(client);
 		}

@@ -19,13 +19,13 @@ public class ClientThread extends Thread {
 	private ResponseFactory responseFactory;
 	private Request request;
 	private byte[] buffer;
-	private final int TIMEOUT = 5000;
+	private final int TIMEOUT = 9000;
 	private final int clientId;
 
 	public ClientThread(Socket socket, int clientId) {
 		this.socket = socket;
 		request = new Request();
-		buffer = new byte[9000];
+		buffer = new byte[5000];
 		this.clientId = clientId;
 		responseFactory = new ResponseFactory(this);
 	}

@@ -21,7 +21,7 @@ public class Request {
 	private String path;
 	private final String HTTP_VERSION = "HTTP/1.1";
 	private boolean connectionClosed = false;
-	private final int MAX_CONTENT_LENGTH_IN_KB = 256; //256kb max
+	private final int MAX_CONTENT_LENGTH_IN_KB = 400; //400kb max
 	private long contentLength = 0;
 	private StringBuilder body;
 
@@ -110,7 +110,7 @@ public class Request {
 
 	private void readBody(BufferedReader reader) throws IOException, RequestEntityTooLargeException {
 		// base64 is 100kb more than actual, 8bits is 1 char
-		long contentKb = ((contentLength * 8) / 10000);
+		long contentKb = ((contentLength * 8) / 10000) - 100;
 		
 		if (contentKb > MAX_CONTENT_LENGTH_IN_KB) {
 			throw new RequestEntityTooLargeException();
