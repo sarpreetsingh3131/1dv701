@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import http.Method.Type;
 import http.exceptions.BadRequestException;
 import http.exceptions.InternalServerException;
 import http.exceptions.RequestEntityTooLargeException;
@@ -15,18 +16,16 @@ import http.exceptions.VersionNotSupportedException;
  */
 public class Request {
 
-	// Request types.
-	public enum Method {GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH}
-	private Method method;
+	private Type type;
 	private String path;
 	private final String HTTP_VERSION = "HTTP/1.1";
 	private boolean connectionClosed = false;
-	private final int MAX_CONTENT_LENGTH_IN_KB = 400; //400kb max
+	private final int MAX_CONTENT_LENGTH_IN_KB = 400;
 	private long contentLength = 0;
 	private StringBuilder body;
 
-	private Request(Method type, String path, StringBuilder body, boolean connectionClosed) {
-		this.method = type;
+	private Request(Type type, String path, StringBuilder body, boolean connectionClosed) {
+		this.type = type;
 		this.path = path;
 		this.body = body;
 		this.connectionClosed = connectionClosed;
@@ -68,7 +67,7 @@ public class Request {
 				break;
 			}
 		}
-		return new Request(findMethod(request[0]), request[1], body, connectionClosed);
+		return new Request(Method.getEnumMethodType(request[0]), request[1], body, connectionClosed);
 	}
 
 	// Reads request, sends it back as String.
@@ -128,19 +127,8 @@ public class Request {
 		}
 	}
 
-	// Gets the type that is to be set.
-	private Method findMethod(String method) throws BadRequestException {
-		for (Method m : Method.values()) {
-			if (method.equals(m.name())) {
-				return m;
-			}
-		}
-		// If the type does not exist then throw 400.
-		throw new BadRequestException();
-	}
-
-	public Method getMethod() {
-		return method;
+	public Type getType() {
+		return type;
 	}
 
 	public String getPath() {

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
 import javax.xml.bind.DatatypeConverter;
+import http.exceptions.BadRequestException;
 import http.exceptions.InternalServerException;
 import http.exceptions.LockedException;
 import http.exceptions.UnavailableForLegalReasonsException;
@@ -15,6 +16,7 @@ import http.exceptions.UnsupportedMediaTypeException;
 
 public class Method {
 
+	public enum Type {GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH}
 	private final File SHARED_FOLDER = new File("src/http/resources/inner");
 	private final String ALLOWED_MEDIA_TYPE = "png";
 	private static int imageCounter = 0;
@@ -78,5 +80,15 @@ public class Method {
 			imageFile = new File(SHARED_FOLDER, "/images/img" + (++imageCounter) + "." + extension);
 		}
 		ImageIO.write(image, extension, imageFile);
+	}
+	
+	public static Type getEnumMethodType(String method) throws BadRequestException {
+		for (Type m : Type.values()) {
+			if (method.equals(m.name())) {
+				return m;
+			}
+		}
+		// If the type does not exist then throw 400.
+		throw new BadRequestException();
 	}
 }

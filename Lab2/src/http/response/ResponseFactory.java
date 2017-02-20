@@ -24,7 +24,7 @@ public class ResponseFactory {
 	}
 
 	public Response getResponse(Request request) {
-		switch (request.getMethod()) {
+		switch (request.getType()) {
 		case GET:
 			try {
 				return new Response200OK(client, method.GET(request.getPath()));
