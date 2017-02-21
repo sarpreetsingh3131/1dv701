@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import http.ClientThread;
+import http.ServerThread;
 
 /*
  * This class forms the specific 200OK response.
@@ -14,7 +14,7 @@ public class Response200OK extends Response {
 	private final File file;
 	
 	// Creates response with file.
-	public Response200OK(ClientThread client, File file) {
+	public Response200OK(ServerThread client, File file) {
 		super(client, "200 OK");
 		this.file = file;
 	}

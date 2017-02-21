@@ -80,7 +80,6 @@ public class Request {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			StringBuilder header = new StringBuilder();
 
-			// Reads until there is no more to read.
 			while (true) {
 				String line = reader.readLine();
 
@@ -92,11 +91,12 @@ public class Request {
 				if (line.startsWith("Content-Length")) {
 					try { // "Content-Length: ".length() = 16
 						contentLength = Integer.parseInt(line.substring(16));
-					} catch (Exception e) {
+					} catch (NumberFormatException e) {
 						throw new BadRequestException();
 					}
 				}
 			}
+	
 			readBody(reader);
 			return header.toString();
 		} catch (IOException e) {
@@ -110,11 +110,10 @@ public class Request {
 	private void readBody(BufferedReader reader) throws IOException, RequestEntityTooLargeException {
 		// base64 is 100kb more than actual, 8bits is 1 char
 		long contentKb = ((contentLength * 8) / 10000) - 100;
-		
 		if (contentKb > MAX_CONTENT_LENGTH_IN_KB) {
 			throw new RequestEntityTooLargeException();
 		}
-		
+
 		body = new StringBuilder();
 		for (int i = 0; i < contentLength; i++) {
 			char ch = (char) reader.read();

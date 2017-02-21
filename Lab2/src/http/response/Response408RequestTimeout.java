@@ -1,13 +1,13 @@
 package http.response;
 
-import http.ClientThread;
+import http.ServerThread;
 
 /*
  * This class forms the specific 408 response.
  */
 public class Response408RequestTimeout extends Response {
 
-	public Response408RequestTimeout(ClientThread client) {
+	public Response408RequestTimeout(ServerThread client) {
 		super(client, "408 Request Time-out");
 	}
 }

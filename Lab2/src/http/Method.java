@@ -19,10 +19,8 @@ public class Method {
 	public enum Type {GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH}
 	private final File SHARED_FOLDER = new File("src/http/resources/inner");
 	private final String ALLOWED_MEDIA_TYPE = "png";
-	private static int imageCounter = 0;
-
-	// synchronized so that a user get all the files present in a html page
-	public synchronized File GET(String path) throws FileNotFoundException, UnavailableForLegalReasonsException,
+	
+	public File GET(String path) throws FileNotFoundException, UnavailableForLegalReasonsException,
 			LockedException, InternalServerException {
 
 		if (path.equals("/")) {
@@ -39,13 +37,9 @@ public class Method {
 		}
 
 		File file = new File(SHARED_FOLDER, path);
-
-		if (file.isDirectory()) {
-			throw new InternalServerException();
-		}
-
-		if (file.exists()) {
-			// For all files(even if add new one) in these folder
+		
+		if (!file.isDirectory() && file.exists()) {
+			//Please change the path according to OS. This only works on mac.
 			switch (file.getParent()) {
 			case "src/http/resources/inner/secret":  throw new SecurityException();
 			case "src/http/resources/inner/legal":   throw new UnavailableForLegalReasonsException();
@@ -57,14 +51,11 @@ public class Method {
 	}
 
 	
-	public synchronized void POST(String content) throws IOException, UnsupportedMediaTypeException {
-		if (content.isEmpty()) {
-			System.out.println("EMPTY PARAMETER");
-			// TODO NEED TO ASK THE TEACHER
-		}
-
+	public void POST(String content) throws IOException, UnsupportedMediaTypeException {
+		String imageName = content.split("=")[0];
 		String body = content.split(",")[1];
 		String extension = content.split(":")[1].split(";")[0].split("/")[1];
+		
 		if (!extension.equals(ALLOWED_MEDIA_TYPE)) {
 			throw new UnsupportedMediaTypeException();
 		}
@@ -73,12 +64,8 @@ public class Method {
 		byte[] imageBytes = DatatypeConverter.parseBase64Binary(body);
 		InputStream in = new ByteArrayInputStream(imageBytes);
 		BufferedImage image = ImageIO.read(in);
-		File imageFile = new File(SHARED_FOLDER, "/images/img" + (++imageCounter) + "." + extension);
-
-		// check for duplicate
-		while (imageFile.exists()) {
-			imageFile = new File(SHARED_FOLDER, "/images/img" + (++imageCounter) + "." + extension);
-		}
+		
+		File imageFile = new File(SHARED_FOLDER, "/images/" + imageName);
 		ImageIO.write(image, extension, imageFile);
 	}
 	

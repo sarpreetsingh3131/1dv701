@@ -1,10 +1,10 @@
 package http.response;
 
-import http.ClientThread;
+import http.ServerThread;
 
 public class Response415UnsupportedMediaType extends Response {
 
-	public Response415UnsupportedMediaType(ClientThread client) {
+	public Response415UnsupportedMediaType(ServerThread client) {
 		super(client, "415 Unsupported Media Type");
 	}
 }

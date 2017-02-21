@@ -2,7 +2,7 @@ package http.response;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import http.ClientThread;
+import http.ServerThread;
 import http.Request;
 import http.Method;
 import http.exceptions.InternalServerException;
@@ -16,9 +16,9 @@ import http.exceptions.UnsupportedMediaTypeException;
 public class ResponseFactory {
 
 	private Method method;
-	private ClientThread client;
+	private ServerThread client;
 	
-	public ResponseFactory(ClientThread client) {
+	public ResponseFactory(ServerThread client) {
 		method = new Method();
 		this.client = client;
 	}
@@ -82,6 +82,7 @@ public class ResponseFactory {
 		try {
 			response.write();
 		} catch (IOException e) {
+
 		}
 	}
 }

@@ -5,12 +5,12 @@
 <body>
 	<h1>Hello World</h1>
 
-	<p>Select a File to Load:</p>
-	<form method="post">
+	<p>Upload new File:</p>
+	<form action = "/images" method="post">
 		<input id="uploadedFile" type="file" onchange="getFileURL();" /> 
-		<input id="contents" name="imagedata" hidden="on"> <input type="submit">
+		<input id="contents" name="" hidden="on"> <input type="submit">
 	</form>
-	
+		
 	<img src="images/img1.png" />
 	<img src="images/img2.png" />
 	<img src="images/img3.png" />
@@ -27,8 +27,10 @@
         			var fileToLoad = filesSelected[0];
 					var fileReader = new FileReader();
  					fileReader.onload = function(fileLoadedEvent) {
+            		var filename = fileToLoad.name;
             		var content = document.getElementById("contents");
             		content.value = fileLoadedEvent.target.result;
+            		content.name = filename;
         			};
  					fileReader.readAsDataURL(fileToLoad);
  				}

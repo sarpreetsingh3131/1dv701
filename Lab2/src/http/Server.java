@@ -14,19 +14,16 @@ public class Server {
 		ServerSocket serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(PORT);
+			System.out.println("Server started");
 		} catch (IOException e) {
 			System.out.println("ERROR: PORT IS IN USE!!");
 			System.exit(1);
 		}
 		
-		System.out.println("Server started");
 		int clientId = 0;
-		
-		// Waits for connections to accept.
 		while (true) {
 			Socket socket = serverSocket.accept();
-			// After accepting a new client thread is created for the client.
-			ClientThread client = new ClientThread(socket, ++clientId);
+			ServerThread client = new ServerThread(socket, ++clientId);
 			client.start();
 		}
 	}

@@ -13,19 +13,19 @@ import http.response.ResponseFactory;
 /*
  * A client thread handling the requests from the client.
  */
-public class ClientThread extends Thread {
+public class ServerThread extends Thread {
 
 	private final Socket socket;
 	private ResponseFactory responseFactory;
 	private Request request;
 	private byte[] buffer;
-	private final int TIMEOUT = 9000;
+	private final int TIMEOUT = 5000;
 	private final int clientId;
 
-	public ClientThread(Socket socket, int clientId) {
+	public ServerThread(Socket socket, int clientId) {
 		this.socket = socket;
 		request = new Request();
-		buffer = new byte[5000];
+		buffer = new byte[1024];
 		this.clientId = clientId;
 		responseFactory = new ResponseFactory(this);
 	}
@@ -33,14 +33,14 @@ public class ClientThread extends Thread {
 	@Override
 	public void run() {
 		System.out.println("Client " + clientId + " connected");
-		// A loop processing all the requests made by client
+
 		while (true) {
 			try {
-				// Maintenance checking for the 503 Response.
 				if (Server.UNDER_MAINTAINENCE) {
 					throw new ServiceUnavailableException();
 				}
 				responseFactory.getResponse(request.parseRequest(socket, TIMEOUT)).write();
+				
 			} catch (IOException | InternalServerException e) {
 				responseFactory.writeResponse500InternalServerError();
 				break;
@@ -58,29 +58,29 @@ public class ClientThread extends Thread {
 				break;
 			} catch (RequestEntityTooLargeException e) {
 				responseFactory.writeResponse413RequestEntityTooLarge();
+			}
+			if (request.connectionClosed()) {
 				break;
 			}
-			if(request.connectionClosed()) 
-				break;
 		}
 		
+		
 		try {
-			// closing socket.
 			socket.close();
+			System.out.println("Client " + clientId + " disconnected");
 		} catch (IOException e) {
 			responseFactory.writeResponse500InternalServerError();
 		}
-		System.out.println("Client " + clientId + " disconnected");
 	}
-	
+
 	public Socket getSocket() {
 		return socket;
 	}
-	
+
 	public byte[] getBuffer() {
 		return buffer;
 	}
-	
+
 	public int getClientId() {
 		return clientId;
 	}

@@ -3,7 +3,7 @@ package http.response;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
-import http.ClientThread;
+import http.ServerThread;
 
 /*
  * This class consist of one Response and ability to send it.
@@ -29,14 +29,14 @@ public abstract class Response {
 			this.extensions = extensions.split(", ");
 		}
 	}
-	
+
 	private String response;
 	private final String CONTENT;
 	private final String EXTENSION = "html";
-	protected ClientThread client;
+	protected ServerThread client;
 
 	// Forms the response.
-	public Response(ClientThread client, String response) {
+	public Response(ServerThread client, String response) {
 		this.response = "HTTP/1.1 " + response + "\r\n";
 		this.CONTENT = "<html><body><h1>" + response + "</h1></body></html>";
 		this.client = client;
@@ -53,19 +53,18 @@ public abstract class Response {
 		// Includes date, content length and type.
 		response += "Date: " + new Date().toString() + "\r\n";
 		response += getContentLengthAndType(length, fileExtension) + "\r\n";
-		
+
 		// Sends the header.
-			PrintWriter printer = new PrintWriter(client.getSocket().getOutputStream(), true);
-			printer.write(response);
-			printer.flush();
+		PrintWriter printer = new PrintWriter(client.getSocket().getOutputStream(), true);
+		printer.write(response);
+		printer.flush();
 	}
 
 	// Sends the content body.
 	private void writeContent() throws IOException {
 		client.getSocket().getOutputStream().write(CONTENT.getBytes());
-		
 	}
-	
+
 	// Returns the content length plus the type.
 	private String getContentLengthAndType(long length, String fileExtension) {
 		// Checks if the content type is known.
@@ -76,7 +75,7 @@ public abstract class Response {
 				}
 			}
 		}
-		//else return the application unknown.
+		// else return the application unknown.
 		return "Content-Length: " + length + "\r\nContent-Type: " + ContentType.applicationunknown.value + "\r\n";
 	}
 }
