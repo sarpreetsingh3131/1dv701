@@ -69,7 +69,7 @@ public class Method {
 				}
 			}
 		}
-
+		
 		if (!file.isDirectory() && file.exists()) {
 			switch (file.getParent()) {
 			case PATH + PATH_SEPARATOR + "secret":

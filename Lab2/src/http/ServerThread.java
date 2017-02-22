@@ -86,6 +86,10 @@ public class ServerThread extends Thread {
 				responseFactory.writeResponse415UnsupportedMediaType();
 				break;
 
+			} catch (SecurityException e) {
+				responseFactory.writeResponse403Forbidden();
+				break;
+
 			} catch (LockedException e) {
 				responseFactory.writeResponse423Locked();
 				break;
@@ -95,14 +99,11 @@ public class ServerThread extends Thread {
 				break;
 
 			} catch (FileNotFoundException e) {
+				e.printStackTrace();
 				responseFactory.writeResponse404NotFound();
 				break;
 
-			} catch (SecurityException e) {
-				responseFactory.writeResponse403Forbidden();
-				break;
-
-			} catch (IOException e) {
+			}  catch (IOException e) {
 				responseFactory.writeResponse500InternalServerError();
 				break;
 			}
