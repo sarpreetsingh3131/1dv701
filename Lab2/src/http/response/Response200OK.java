@@ -15,7 +15,7 @@ public class Response200OK extends Response {
 	
 	// Creates response with file.
 	public Response200OK(ServerThread client, File file) {
-		super(client, "200 OK");
+		super(client, "200 OK", "");
 		this.file = file;
 	}
 

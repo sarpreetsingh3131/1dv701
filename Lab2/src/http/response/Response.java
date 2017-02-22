@@ -26,6 +26,7 @@ public abstract class Response {
 		// Sets content value and extension.
 		private ContentType(String value, String extensions) {
 			this.value = value;
+			//Get all declared extensions separated by comma
 			this.extensions = extensions.split(", ");
 		}
 	}
@@ -36,9 +37,9 @@ public abstract class Response {
 	protected ServerThread client;
 
 	// Forms the response.
-	public Response(ServerThread client, String response) {
-		this.response = "HTTP/1.1 " + response + "\r\n";
-		this.CONTENT = "<html><body><h1>" + response + "</h1></body></html>";
+	public Response(ServerThread client, String header, String content) {
+		this.response = "HTTP/1.1 " + header + "\r\n";
+		this.CONTENT = "<html><body><h1>" + header + "</h1><p>" + content + "</p></body></html>";
 		this.client = client;
 	}
 
