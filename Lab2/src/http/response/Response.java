@@ -5,13 +5,91 @@ import java.io.PrintWriter;
 import java.util.Date;
 import http.ServerThread;
 
-/*
- * This class consist of one Response and ability to send it.
- */
 public abstract class Response {
+
+	private String response;
+	private final String CONTENT;
+	private final String EXTENSION = "html";
+	protected ServerThread client;
+
+	public Response(ServerThread client, String header, String content) {
+		this.response = "HTTP/1.1 " + header + "\r\n";
+		this.CONTENT = "<html><body><h1>" + header + "</h1><p>" + content + "</p></body></html>";
+		this.client = client;
+	}
+
+	/**
+	 * This method writes a complete response to the client.
+	 * 
+	 * @throws IOException
+	 *             If I/O occurs
+	 */
+	public void write() throws IOException {
+		writeHeader(CONTENT.getBytes().length, EXTENSION);
+		writeContent();
+	}
+
+	/**
+	 * This method write the response header. It include date, content-length
+	 * and file extension. Printer is set to auto flush that is why its true.
+	 * 
+	 * @param length
+	 * @param fileExtension
+	 * @throws IOException
+	 */
+	protected void writeHeader(long length, String fileExtension) throws IOException {
+
+		response += "Date: " + new Date().toString() + "\r\n";
+		response += "Content-Length: " + length + "\r\n";
+		response += "Content-Type: " + getContentType(fileExtension) + "\r\n\r\n";
+
+		PrintWriter printer = new PrintWriter(client.getSocket().getOutputStream(), true);
+		printer.write(response);
+		printer.flush();
+	}
+
+	/**
+	 * This method write the content of the response which client will see in
+	 * the browser such as requested files.
+	 * 
+	 * @throws IOException
+	 */
+	private void writeContent() throws IOException {
+
+		client.getSocket().getOutputStream().write(CONTENT.getBytes());
+	}
+
+	/**
+	 * This method find the suitable extension in the declared
+	 * {@link ContentType} and return its value as a String. If fileExtension is
+	 * not present in the {@link ContentType} then 'application unknown' will be
+	 * returned.
+	 * 
+	 * @param length
+	 * @param fileExtension
+	 * @return String
+	 */
+	private String getContentType(String fileExtension) {
+
+		for (ContentType type : ContentType.values()) {
+			for (String extension : type.extensions) {
+				if (fileExtension.equals(extension)) {
+					return type.value;
+				}
+			}
+		}
+
+		return ContentType.applicationunknown.value;
+	}
+
 	
+	/**
+	 * 
+	 * Enumeration for the Content Type
+	 *
+	 */
 	private enum ContentType {
-		// Types of the content in the response.
+
 		texthtml("text/html", "html, htm"), 
 		textcss("text/css", "css"), 
 		textjavascript("text/javascript", "js"), 
@@ -23,60 +101,20 @@ public abstract class Response {
 		private String value;
 		private String[] extensions;
 
-		// Sets content value and extension.
+		/**
+		 * We need constructor because we are setting the String value of
+		 * Enumeration. extension is splitting in order to get all the declared
+		 * values. Eg: text/html, html, htm are three different values separated
+		 * by comma and We have to compare the given file extension value with
+		 * each of it.
+		 * 
+		 * @param value
+		 * @param extensions
+		 */
 		private ContentType(String value, String extensions) {
 			this.value = value;
-			//Get all declared extensions separated by comma
 			this.extensions = extensions.split(", ");
 		}
-	}
 
-	private String response;
-	private final String CONTENT;
-	private final String EXTENSION = "html";
-	protected ServerThread client;
-
-	// Forms the response.
-	public Response(ServerThread client, String header, String content) {
-		this.response = "HTTP/1.1 " + header + "\r\n";
-		this.CONTENT = "<html><body><h1>" + header + "</h1><p>" + content + "</p></body></html>";
-		this.client = client;
-	}
-
-	// Write/sends the response.
-	public void write() throws IOException {
-		writeHeader(CONTENT.getBytes().length, EXTENSION);
-		writeContent();
-	}
-
-	// Forms the header.
-	protected void writeHeader(long length, String fileExtension) throws IOException {
-		// Includes date, content length and type.
-		response += "Date: " + new Date().toString() + "\r\n";
-		response += getContentLengthAndType(length, fileExtension) + "\r\n";
-
-		// Sends the header.
-		PrintWriter printer = new PrintWriter(client.getSocket().getOutputStream(), true);
-		printer.write(response);
-		printer.flush();
-	}
-
-	// Sends the content body.
-	private void writeContent() throws IOException {
-		client.getSocket().getOutputStream().write(CONTENT.getBytes());
-	}
-
-	// Returns the content length plus the type.
-	private String getContentLengthAndType(long length, String fileExtension) {
-		// Checks if the content type is known.
-		for (ContentType type : ContentType.values()) {
-			for (String extension : type.extensions) {
-				if (fileExtension.equals(extension)) {
-					return "Content-Length: " + length + "\r\nContent-Type: " + type.value + "\r\n";
-				}
-			}
-		}
-		// else return the application unknown.
-		return "Content-Length: " + length + "\r\nContent-Type: " + ContentType.applicationunknown.value + "\r\n";
 	}
 }

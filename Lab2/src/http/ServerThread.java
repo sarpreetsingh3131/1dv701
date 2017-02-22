@@ -10,9 +10,6 @@ import http.exceptions.VersionNotSupportedException;
 import http.exceptions.BadRequestException;
 import http.response.ResponseFactory;
 
-/*
- * A client thread handling the requests from the client.
- */
 public class ServerThread extends Thread {
 
 	private final Socket socket;
@@ -20,48 +17,60 @@ public class ServerThread extends Thread {
 	private RequestParser request;
 	private byte[] buffer;
 	private final int clientId;
-	private final int TIME_OUT = 10000;
-	
-	
+	private final int TIME_OUT_IN_MS = 10000;
+
 	public ServerThread(Socket socket, int clientId) {
 		this.socket = socket;
 		request = new RequestParser();
 		buffer = new byte[8000];
 		this.clientId = clientId;
 		responseFactory = new ResponseFactory(this);
+		System.out.println("Client " + clientId + " connected");
 	}
 
+	/**
+	 * This method runs until one of Error response comes or connection property
+	 * in request header is close. It sets the time out time first and then
+	 * parse the client request. Once the request is parsed it goes to response
+	 * factory which will return an appropriate response. While parsing if any
+	 * error comes it will be catch here and display to client. Server
+	 * 'UNDER_MAINTAINENCE' property can be changed manually in Server class.
+	 */
 	@Override
 	public void run() {
-		System.out.println("Client " + clientId + " connected");
 
 		while (true) {
 			try {
+
 				if (Server.UNDER_MAINTAINENCE) {
 					throw new ServiceUnavailableException();
 				}
 
-				socket.setSoTimeout(TIME_OUT);
+				socket.setSoTimeout(TIME_OUT_IN_MS);
 				request = request.parse(new BufferedReader(new InputStreamReader(socket.getInputStream())));
 				responseFactory.getResponse(request).write();
 
 			} catch (SocketTimeoutException e) {
 				responseFactory.writeResponse408RequestTimeout();
 				break;
+
 			} catch (IOException e) {
-				e.printStackTrace();
 				responseFactory.writeResponse500InternalServerError();
 				break;
+
 			} catch (BadRequestException e) {
 				responseFactory.writeResponse400BadRequest();
 				break;
+
 			} catch (VersionNotSupportedException e) {
 				responseFactory.writeResponse505HTTPVersionNotSupported();
 				break;
+
 			} catch (ServiceUnavailableException e) {
 				responseFactory.writeResponse503ServiceUnavailable();
 				break;
-			} catch (ArrayIndexOutOfBoundsException e) {
+
+			} catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
 				responseFactory.writeResponse422UnprocssableEntity();
 				break;
 			}
@@ -73,10 +82,11 @@ public class ServerThread extends Thread {
 
 		try {
 			socket.close();
-			System.out.println("Client " + clientId + " disconnected");
 		} catch (IOException e) {
 			responseFactory.writeResponse500InternalServerError();
 		}
+
+		System.out.println("Client " + clientId + " disconnected");
 	}
 
 	public Socket getSocket() {

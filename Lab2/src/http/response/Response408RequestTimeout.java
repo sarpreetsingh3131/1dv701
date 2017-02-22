@@ -2,9 +2,6 @@ package http.response;
 
 import http.ServerThread;
 
-/*
- * This class forms the specific 408 response.
- */
 public class Response408RequestTimeout extends Response {
 
 	public Response408RequestTimeout(ServerThread client) {

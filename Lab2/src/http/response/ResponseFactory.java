@@ -5,13 +5,11 @@ import java.io.IOException;
 import http.ServerThread;
 import http.RequestParser;
 import http.Method;
+import http.Method.MethodType;
 import http.exceptions.LockedException;
 import http.exceptions.UnavailableForLegalReasonsException;
 import http.exceptions.UnsupportedMediaTypeException;
 
-/*
- * This class returns Responses depending request.
- */
 public class ResponseFactory {
 
 	private Method method;
@@ -22,13 +20,22 @@ public class ResponseFactory {
 		this.client = client;
 	}
 
-	public Response getResponse(RequestParser request) {
+	/**
+	 * This method get {@link MethodType} from {@link RequestParser} and then
+	 * return appropriate {@link Response}. All the methods other than GET,
+	 * POST, PUT are not implemented which means method will return 501
+	 * response.
+	 * 
+	 * @param requestParser
+	 * @return {@link Response}
+	 */
+	public Response getResponse(RequestParser requestParser) {
 
-		switch (request.getType()) {
+		switch (requestParser.getMethodType()) {
 
 		case GET:
 			try {
-				return new Response200OK(client, method.GET(request.getPath()));
+				return new Response200OK(client, method.GET(requestParser.getPath()));
 			} catch (FileNotFoundException e) {
 				return new Response404NotFound(client);
 			} catch (SecurityException e) {
@@ -41,8 +48,8 @@ public class ResponseFactory {
 
 		case POST:
 			try {
-				method.POST(request);
-				return new Response201Created(client, request.getUploadedFileName());
+				method.POST(requestParser);
+				return new Response201Created(client, requestParser.getUploadedFileName());
 			} catch (IOException e) {
 				return new Response500InternalServerError(client);
 			} catch (UnsupportedMediaTypeException e) {
@@ -54,6 +61,7 @@ public class ResponseFactory {
 		}
 	}
 
+	/* Some handy methods for other responses. */
 	public void writeResponse400BadRequest() {
 		write(new Response400BadRequest(client));
 	}
@@ -77,13 +85,11 @@ public class ResponseFactory {
 	public void writeResponse422UnprocssableEntity() {
 		write(new Response422UnprocessableEntity(client));
 	}
-	
-	// writes the response.
+
 	private void write(Response response) {
 		try {
 			response.write();
 		} catch (IOException e) {
-
 		}
 	}
 }
