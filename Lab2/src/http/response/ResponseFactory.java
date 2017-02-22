@@ -121,7 +121,6 @@ public class ResponseFactory {
 		try {
 			response.write();
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 }
