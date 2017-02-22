@@ -50,7 +50,9 @@ public class RequestParser {
 	 * Host: localhost:8080,.....]. From this split we get a new array which
 	 * looks like [GET, /, HTTP/1.1]. If length is not 3 it is bad request.
 	 * Otherwise we check version if its 1.1 and connection if its keep-alive or
-	 * close. At last we assign the values to class attributes.
+	 * close. At last we assign the values to class attributes. NOTE: If body
+	 * contains "METHOD-PUT", then type is already assigned as PUT and will not
+	 * assign here again.
 	 * 
 	 * @param header
 	 * @throws BadRequestException
@@ -85,7 +87,10 @@ public class RequestParser {
 			}
 		}
 
-		this.type = Method.getEnumMethodType(request[0]);
+		if (type != Method.MethodType.PUT) {
+			this.type = Method.getEnumMethodType(request[0]);
+		}
+
 		this.path = request[1];
 	}
 
@@ -128,10 +133,14 @@ public class RequestParser {
 	}
 
 	/**
-	 * This method parse the request body. For getting the file name, body and
-	 * extension we have to split the string in a specific way because we know
-	 * that the data will come in this format <image name>=<data:image/<image
-	 * extension>;base64,>,<image data>
+	 * This method parse the request body. In addition, it also set the type
+	 * when user do PUT request because PUT request is not supported by html
+	 * <form> like POST, so I have to add "METHOD-PUT" manually to recognize the
+	 * PUT request. For getting the file name, body and extension we have to
+	 * split the string in a specific way because we know that the data will
+	 * come in this format <image name>=<data:image/<image
+	 * extension>;base64,>,<image data>. NOTE: If body contains "METHOD-PUT" I
+	 * have to further split in order to get fileName.
 	 * 
 	 * @param body
 	 * @throws ArrayIndexOutOfBoundsException
@@ -139,7 +148,13 @@ public class RequestParser {
 	 */
 	private void parseBody(String body) throws ArrayIndexOutOfBoundsException {
 
-		this.uploadedFileName = body.split("=")[0];
+		if (body.startsWith("Method-PUT")) {
+			this.type = Method.MethodType.PUT;
+			this.uploadedFileName = body.split("=")[0].split("Method-PUT")[1];
+		} else {
+			this.uploadedFileName = body.split("=")[0];
+		}
+
 		this.body = body.split("base64,")[1];
 		this.uploadedFileExtension = body.split(":")[1].split(";")[0].split("/")[1];
 	}
@@ -177,7 +192,7 @@ public class RequestParser {
 
 		return body.toString();
 	}
-
+	
 	private RequestParser(MethodType type, String path, String body, boolean connectionClosed, String uploadedFileName,
 			String uploadedFileExtension) {
 

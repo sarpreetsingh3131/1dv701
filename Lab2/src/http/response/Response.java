@@ -42,7 +42,7 @@ public abstract class Response {
 		response += "Date: " + new Date().toString() + "\r\n";
 		response += "Content-Length: " + length + "\r\n";
 		response += "Content-Type: " + getContentType(fileExtension) + "\r\n\r\n";
-
+		
 		PrintWriter printer = new PrintWriter(client.getSocket().getOutputStream(), true);
 		printer.write(response);
 		printer.flush();
@@ -55,7 +55,6 @@ public abstract class Response {
 	 * @throws IOException
 	 */
 	private void writeContent() throws IOException {
-
 		client.getSocket().getOutputStream().write(CONTENT.getBytes());
 	}
 

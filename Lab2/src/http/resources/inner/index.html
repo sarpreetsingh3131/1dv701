@@ -3,13 +3,23 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 </head>
 <body>
-	<h1>Hello World</h1>
 
-	<p>Upload new File:</p>
+	<h1>Upload New Image</h1>
 	<form action = "/images" method="post">
-		<input id="uploadedFile" type="file" onchange="getFileURL();" /> 
+		<input id="uploadedFile" type="file" onchange="POST();" /> 
 		<input id="contents" name="" hidden="on"> <input type="submit">
 	</form>
+
+	
+	<br/>
+	
+	
+	<h1>Update Existing Image</h1>
+	<form action = "/images" method="post">
+		<input id="updatedFile" type="file" onchange="PUT();" /> 
+		<input id="updateContents" name="" hidden="on"> <input type="submit">
+	</form>
+	
 		
 	<img src="images/img1.png" />
 	<img src="images/img2.png" />
@@ -19,22 +29,64 @@
 	<img src="images/img6.png" />
 	
 	
+	
 	<!-- https://thiscouldbebetter.wordpress.com/2013/07/03/converting-a-file-to-a-base64-dataurl-in-javascript/ -->	
+		
 		<script type="text/javascript">
- 		function getFileURL() {
+ 		
+ 		function POST() {
+    		
     		var filesSelected = document.getElementById("uploadedFile").files;
+    			
     			if (filesSelected.length > 0) {
+        			
         			var fileToLoad = filesSelected[0];
+					
 					var fileReader = new FileReader();
+ 					
  					fileReader.onload = function(fileLoadedEvent) {
-            		var filename = fileToLoad.name;
-            		var content = document.getElementById("contents");
-            		content.value = fileLoadedEvent.target.result;
-            		content.name = filename;
+            		
+            			var filename = fileToLoad.name;
+            		
+            			var content = document.getElementById("contents");
+            		
+            			content.value = fileLoadedEvent.target.result;
+            		
+            			content.name = filename;
         			};
+ 					
  					fileReader.readAsDataURL(fileToLoad);
  				}
 			}
+			
+			
+			function PUT() {
+    		
+    		var filesSelected = document.getElementById("updatedFile").files;
+    			
+    			if (filesSelected.length > 0) {
+        			
+        			var fileToLoad = filesSelected[0];
+					
+					var fileReader = new FileReader();
+ 					
+ 					fileReader.onload = function(fileLoadedEvent) {
+            		
+            			var filename = fileToLoad.name;
+            		
+            			var content = document.getElementById("updateContents");
+            		
+            			content.value = fileLoadedEvent.target.result;
+            			
+            			// Adding PUT manually because HTML5 does not support it
+            			content.name = "Method-PUT" + filename;
+        			};
+ 					
+ 					fileReader.readAsDataURL(fileToLoad);
+ 				}
+			}
+			
+			
 		 </script>
 </body>
 </html>
