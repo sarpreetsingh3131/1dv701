@@ -99,7 +99,6 @@ public class ServerThread extends Thread {
 				break;
 
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
 				responseFactory.writeResponse404NotFound();
 				break;
 
