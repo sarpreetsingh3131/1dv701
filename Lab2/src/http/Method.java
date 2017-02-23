@@ -15,7 +15,6 @@ public class Method {
 
 	// This path separator only works on mac. Other users must change it.
 	private final String PATH_SEPARATOR = "/";
-
 	public enum MethodType {GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH}
 	private final String PATH = "src" + PATH_SEPARATOR + "http" + PATH_SEPARATOR + "resources" + PATH_SEPARATOR + "inner";
 	private final File SHARED_FOLDER = new File(PATH);
@@ -23,11 +22,13 @@ public class Method {
 
 	/**
 	 * This method returns the requested File when user do GET request. If path
-	 * ends with '/' then it return default file or if ends with 'htm' then it
-	 * include 'l' in the path. If path does not contain '/' and '.'
-	 * (Eg:localhost:8080) then it include '/' in it. Then it create a file
-	 * using the shared folder as parent and given path as child. If file is
-	 * directory then we look for index file. If file is not directory and it
+	 * ends with '/' then it include default file path or if ends with 'htm' and
+	 * file does not exist then it include 'l' in the path. If it ends with
+	 * 'html' and file does not exist then it remove 'l'. I do this in order to
+	 * get file from directory which ends with 'htm'. If path does not contain
+	 * '/' and '.' (Eg:localhost:8080) then it include '/' in it. Then it create
+	 * a file using the shared folder as parent and given path as child. If file
+	 * is directory then we look for index file. If file is not directory and it
 	 * exits then it return the suitable Exception or File. Otherwise, it throw
 	 * FileNotFoundException. NOTE: Only default directory have index file, all
 	 * the sub directories have no index file which results in
@@ -45,14 +46,19 @@ public class Method {
 	 * @throws SecurityException
 	 *             When path belong to secret directory
 	 */
-	public File GET(String path) throws FileNotFoundException, UnavailableForLegalReasonsException, LockedException, SecurityException {
+	public File GET(String path)
+			throws FileNotFoundException, UnavailableForLegalReasonsException, LockedException, SecurityException {
 
 		if (path.equals("/")) {
-			path += "index.html";
+			path += "index.htm";
 		}
 
-		else if (path.endsWith("htm")) {
+		if (path.endsWith("htm") && !new File(SHARED_FOLDER, path).exists()) {
 			path += "l";
+		}
+
+		else if (path.endsWith("html") && !new File(SHARED_FOLDER, path).exists()) {
+			path = path.substring(0, path.length() - 1);
 		}
 
 		else if (path.charAt(path.length() - 1) != '/' && path.split("\\.").length == 0) {
@@ -63,13 +69,14 @@ public class Method {
 
 		if (file.isDirectory()) {
 			for (int i = 0; i < file.listFiles().length; i++) {
-				if (file.listFiles()[i].getName().startsWith("index.htm")) {
+				if (file.listFiles()[i].getName().equals("index.htm")
+						|| file.listFiles()[i].getName().equals("index.html")) {
 					file = file.listFiles()[i];
 					break;
 				}
 			}
 		}
-		
+
 		if (!file.isDirectory() && file.exists()) {
 			switch (file.getParent()) {
 			case PATH + PATH_SEPARATOR + "secret":
