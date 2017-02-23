@@ -103,9 +103,12 @@ public class Method {
 	 *             When writing a new file got error
 	 * @throws UnsupportedMediaTypeException
 	 *             When uploaded file is other than png/jpg/jpeg format.
+	 *  
+	 * @throws NullPointerException
+	 * 				When request body is empty            
 	 */
 
-	public void POST(RequestParser requestParser) throws IOException, UnsupportedMediaTypeException {
+	public void POST(RequestParser requestParser) throws IOException, UnsupportedMediaTypeException, NullPointerException {
 
 		if (!ALLOWED_MEDIA_TYPE.contains(requestParser.getUploadedFileExtension())) {
 			throw new UnsupportedMediaTypeException();

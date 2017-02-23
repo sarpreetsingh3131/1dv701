@@ -102,7 +102,7 @@ public class ServerThread extends Thread {
 				responseFactory.writeResponse404NotFound();
 				break;
 
-			}  catch (IOException e) {
+			}  catch (IOException | NullPointerException e) {
 				responseFactory.writeResponse500InternalServerError();
 				break;
 			}

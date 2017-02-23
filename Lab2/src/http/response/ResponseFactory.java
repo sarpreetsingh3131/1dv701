@@ -47,7 +47,7 @@ public class ResponseFactory {
 	 */
 	public Response getResponse(RequestParser requestParser)
 			throws IOException, ConflictException, UnsupportedMediaTypeException, LockedException,
-			UnavailableForLegalReasonsException, FileNotFoundException, SecurityException {
+			UnavailableForLegalReasonsException, FileNotFoundException, SecurityException, NullPointerException {
 
 		switch (requestParser.getMethodType()) {
 
