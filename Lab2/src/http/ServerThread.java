@@ -22,7 +22,7 @@ public class ServerThread extends Thread {
 	private RequestParser requestParser;
 	private byte[] buffer;
 	private final int clientId;
-	private final int TIME_OUT_IN_MS = 50000;
+	private final int TIME_OUT_IN_MS = 100000;
 
 	public ServerThread(Socket socket, int clientId) {
 		this.socket = socket;
@@ -41,8 +41,9 @@ public class ServerThread extends Thread {
 	 * error comes it will be catch here and display to client. Server
 	 * 'UNDER_MAINTAINENCE' property can be changed manually in Server class.
 	 * The thread stops whenever any of the exception comes. There is one rare
-	 * case and that is when request is PUT, if I don't break it then browser
-	 * freeze until it is time out.
+	 * case and that is when request is not GET, we done this in order to not
+	 * create duplicates or overwrite the resources. Why not GET? because it is
+	 * read only method.
 	 */
 	@Override
 	public void run() {
@@ -102,12 +103,12 @@ public class ServerThread extends Thread {
 				responseFactory.writeResponse404NotFound();
 				break;
 
-			}  catch (IOException | NullPointerException e) {
+			} catch (IOException | NullPointerException e) {
 				responseFactory.writeResponse500InternalServerError();
 				break;
 			}
 
-			if (requestParser.connectionClosed() || requestParser.getMethodType() == Method.MethodType.PUT) {
+			if (requestParser.connectionClosed() || requestParser.getMethodType() != Method.MethodType.GET) {
 				break;
 			}
 		}
