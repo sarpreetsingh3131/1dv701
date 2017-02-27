@@ -167,6 +167,11 @@ public class TFTPServer {
 		if (opcode == OP_RRQ) {
 			// See "TFTP Formats" in TFTP specification for the DATA and ACK
 			// packet contents
+			
+			/* After the server gets a read request the server should send the first data packet
+			 * and for each data packet sent an ACK packet should be received.
+			 * In general the ACK packet contains the block number of the aknowledged data packet.
+			 */
 			++block;
 			
 			boolean result = send_DATA_receive_ACK(sendSocket, opcode, block);
@@ -179,6 +184,10 @@ public class TFTPServer {
 				e.printStackTrace();
 			}
 
+			/* After server gets a write request it should send an ACK package in response and
+			 * its block number should be equals to zero. And each data packet must be aknowledged
+			 * by an Ack packade before next packet can be sent.
+			 */
 		} else if (opcode == OP_WRQ) {
 			block++;
 			// boolean result = receive_DATA_send_ACK(params);
