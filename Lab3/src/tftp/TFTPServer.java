@@ -172,6 +172,7 @@ public class TFTPServer {
 			boolean result = send_DATA_receive_ACK(sendSocket, opcode, block);
 			try {
 				FileInputStream stream = new FileInputStream(filePath);
+				
 
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -191,9 +192,13 @@ public class TFTPServer {
 	}
 
 	private boolean send_DATA_receive_ACK(DatagramSocket sendSocket, int opcode, int block) throws IOException {
-		byte[] buffer = new byte[]{(byte)opcode, (byte)block};
-		DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-		sendSocket.send(packet);
+		ByteBuffer wrap = ByteBuffer.allocate(4);
+		wrap.putShort((short) 4);
+		wrap.putShort((short) block);
+		DatagramPacket packet = new DatagramPacket(wrap.array(), wrap.array().length);
+		System.out.println("hello");
+		sendSocket.receive(packet);
+		
 		return true;
 	}
 
