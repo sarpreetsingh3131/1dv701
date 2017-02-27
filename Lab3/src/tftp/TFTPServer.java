@@ -168,9 +168,9 @@ public class TFTPServer {
 			// See "TFTP Formats" in TFTP specification for the DATA and ACK
 			// packet contents
 			
-			/* After the server gets a read request the server should send the first data packet
-			 * and for each data packet sent an ACK packet should be received.
-			 * In general the ACK packet contains the block number of the aknowledged data packet.
+			/* After the server gets a read request the server should send the first DATA packet
+			 * and for each DATA packet sent an ACK packet should be received.
+			 * In general the ACK packet contains the block number of the aknowledged DATA packet.
 			 */
 			++block;
 
@@ -184,8 +184,11 @@ public class TFTPServer {
 			}
 
 			/* After server gets a write request it should send an ACK package in response and
-			 * its block number should be equals to zero. And each data packet must be aknowledged
-			 * by an Ack packade before next packet can be sent.
+			 * its block number should be equals to zero. And each DATA packet must be aknowledged
+			 * by an ACK package before next packet can be sent.
+			 * When the final DATA packet has been received we should wait a while after sending the
+			 * the final ACK packet to be able to retransmit if it was lost. We will know it was lost
+			 * if we receive the final DATA packet again.
 			 */
 		} else if (opcode == OP_WRQ) {
 			block++;
