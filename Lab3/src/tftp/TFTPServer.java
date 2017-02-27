@@ -9,9 +9,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public class TFTPServer {
+	
 	public static final int TFTPPORT = 4970;
 	public static final int BUFSIZE = 516;
 
@@ -156,7 +156,7 @@ public class TFTPServer {
 	 *            (name of file to read/write)
 	 * @param opcode
 	 *            (RRQ or WRQ)
-	 * @throws IOException 
+	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
 	private void HandleRQ(DatagramSocket sendSocket, String requestedFile, int opcode) throws IOException {
@@ -168,11 +168,10 @@ public class TFTPServer {
 			// See "TFTP Formats" in TFTP specification for the DATA and ACK
 			// packet contents
 			++block;
-			
+
 			boolean result = send_DATA_receive_ACK(sendSocket, opcode, block);
 			try {
 				FileInputStream stream = new FileInputStream(filePath);
-				
 
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -198,7 +197,7 @@ public class TFTPServer {
 		DatagramPacket packet = new DatagramPacket(wrap.array(), wrap.array().length);
 		System.out.println("hello");
 		sendSocket.receive(packet);
-		
+
 		return true;
 	}
 
