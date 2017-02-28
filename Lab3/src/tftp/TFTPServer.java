@@ -9,9 +9,12 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class TFTPServer {
-	
+
 	public static final int TFTPPORT = 4970;
 	public static final int BUFSIZE = 516;
 
@@ -74,7 +77,7 @@ public class TFTPServer {
 
 						System.out.printf("%s request for %s from %s using port\n",
 								(reqtype == OP_RRQ) ? "Read" : "Write", clientAddress.getHostName(),
-								clientAddress.getPort());
+										clientAddress.getPort());
 
 						// Read request
 						if (reqtype == OP_RRQ) {
@@ -161,20 +164,39 @@ public class TFTPServer {
 	 */
 	private void HandleRQ(DatagramSocket sendSocket, String requestedFile, int opcode) throws IOException {
 		String filePath = requestedFile.split("\0")[0];
-		byte[] buffer = new byte[BUFSIZE - 4];
-		int block = 0;
+		byte[] buffer = new byte[BUFSIZE];
+		short block = 0;
 
 		if (opcode == OP_RRQ) {
 			// See "TFTP Formats" in TFTP specification for the DATA and ACK
 			// packet contents
-			
+
 			/* After the server gets a read request the server should send the first DATA packet
 			 * and for each DATA packet sent an ACK packet should be received.
 			 * In general the ACK packet contains the block number of the aknowledged DATA packet.
 			 */
 			++block;
-
-			boolean result = send_DATA_receive_ACK(sendSocket, opcode, block);
+			short shortVal = OP_DAT;
+			ByteBuffer wrap = ByteBuffer.wrap(buffer);
+			wrap.putShort(shortVal);
+			wrap.putShort(block);
+			
+			Path p = Paths.get(filePath);
+			byte[] data = new byte[Files.readAllBytes(p).length];
+			data = Files.readAllBytes(p);
+			wrap.put(data);
+			DatagramPacket DATApacket = new DatagramPacket(wrap.array(), wrap.array().length);
+			sendSocket.send(DATApacket);
+			
+			byte[] ack = new byte[4];
+			DatagramPacket ACKpacket = new DatagramPacket(ack, ack.length);
+			sendSocket.receive(ACKpacket);
+			wrap = ByteBuffer.wrap(ack);
+			opcode = wrap.getShort();
+			short blockConfirm = wrap.getShort();
+			System.out.println(opcode + " " + blockConfirm);
+			
+			//boolean result = send_DATA_receive_ACK(sendSocket, opcode, block);
 			try {
 				FileInputStream stream = new FileInputStream(filePath);
 
