@@ -19,8 +19,8 @@ public class TFTPServer {
 	public static final int BUFSIZE = 516;
 
 	// custom address at your PC
-	public static final String READDIR = "src/read/";
-	public static final String WRITEDIR = "src/write/";
+	public static final String READDIR = "src/resources/read/";
+	public static final String WRITEDIR = "src/resources/write/";
 
 	// OP codes
 	public static final int OP_RRQ = 1;
