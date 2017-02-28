@@ -176,6 +176,7 @@ public class TFTPServer {
 			 * In general the ACK packet contains the block number of the aknowledged DATA packet.
 			 */
 			++block;
+			
 			/* Put the opcode and block number in a byte buffer */
 			short shortVal = OP_DAT;
 			ByteBuffer wrap = ByteBuffer.wrap(buffer);
@@ -184,16 +185,24 @@ public class TFTPServer {
 			
 			/* Get the data from requested file and put it in the byte buffer
 			 * then create the DATA packet and send it.
+			 * Handle exceptions:
+			 * 1. file not found
+			 * 2. not enough space
 			 */
 			Path p = Paths.get(filePath);
 			byte[] data = new byte[Files.readAllBytes(p).length];
 			data = Files.readAllBytes(p);
 			wrap.put(data);
-			/* The last datagram packet needs to be less than 516 bytes to signal the end of transfer */
+			
+			/* The last datagram packet needs to be less than 516 bytes to signal the end of transfer
+			 * if the file is larger than 511, create for loop to send more DATA packets
+			 */
 			DatagramPacket DATApacket = new DatagramPacket(wrap.array(), wrap.array().length - 1);
 			sendSocket.send(DATApacket);
 			
-			/* Receive an ACK packet */
+			/* Receive an ACK packet, compare block number with sent block number
+			 * if not the same block number, resend (but not in an enternity)
+			 */
 			byte[] ack = new byte[4];
 			DatagramPacket ACKpacket = new DatagramPacket(ack, ack.length);
 			sendSocket.receive(ACKpacket);
@@ -203,6 +212,8 @@ public class TFTPServer {
 			System.out.println(opcode + " " + blockConfirm);
 			
 			//boolean result = send_DATA_receive_ACK(sendSocket, opcode, block);
+			
+			/* if result is false, send error packet */
 			try {
 				FileInputStream stream = new FileInputStream(filePath);
 
@@ -230,7 +241,7 @@ public class TFTPServer {
 		}
 	}
 
-	private boolean send_DATA_receive_ACK(DatagramSocket sendSocket, int opcode, int block) throws IOException {
+	private boolean send_DATA_receive_ACK(DatagramSocket sendSocket, int block) throws IOException {
 		ByteBuffer wrap = ByteBuffer.allocate(4);
 		wrap.putShort((short) 4);
 		wrap.putShort((short) block);
@@ -243,5 +254,5 @@ public class TFTPServer {
 
 	// private boolean receive_DATA_send_ACK(params) {return true;}
 
-	// private void send_ERR(params) {}
+	// private void send_ERR(DatagramSocket sendSocket, int errorCode, String errorMessage) {}
 }
