@@ -189,7 +189,8 @@ public class TFTPServer {
 			byte[] data = new byte[Files.readAllBytes(p).length];
 			data = Files.readAllBytes(p);
 			wrap.put(data);
-			DatagramPacket DATApacket = new DatagramPacket(wrap.array(), wrap.array().length);
+			/* The last datagram packet needs to be less than 516 bytes to signal the end of transfer */
+			DatagramPacket DATApacket = new DatagramPacket(wrap.array(), wrap.array().length - 1);
 			sendSocket.send(DATApacket);
 			
 			/* Receive an ACK packet */
