@@ -176,11 +176,15 @@ public class TFTPServer {
 			 * In general the ACK packet contains the block number of the aknowledged DATA packet.
 			 */
 			++block;
+			/* Put the opcode and block number in a byte buffer */
 			short shortVal = OP_DAT;
 			ByteBuffer wrap = ByteBuffer.wrap(buffer);
 			wrap.putShort(shortVal);
 			wrap.putShort(block);
 			
+			/* Get the data from requested file and put it in the byte buffer
+			 * then create the DATA packet and send it.
+			 */
 			Path p = Paths.get(filePath);
 			byte[] data = new byte[Files.readAllBytes(p).length];
 			data = Files.readAllBytes(p);
@@ -188,6 +192,7 @@ public class TFTPServer {
 			DatagramPacket DATApacket = new DatagramPacket(wrap.array(), wrap.array().length);
 			sendSocket.send(DATApacket);
 			
+			/* Receive an ACK packet */
 			byte[] ack = new byte[4];
 			DatagramPacket ACKpacket = new DatagramPacket(ack, ack.length);
 			sendSocket.receive(ACKpacket);
