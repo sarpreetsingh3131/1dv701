@@ -77,7 +77,7 @@ public class TFTPServer {
 
 						System.out.printf("%s request for %s from %s using port\n",
 								(reqtype == OP_RRQ) ? "Read" : "Write", clientAddress.getHostName(),
-								clientAddress.getPort());
+										clientAddress.getPort());
 
 						// Read request
 						if (reqtype == OP_RRQ) {
@@ -179,47 +179,68 @@ public class TFTPServer {
 
 		if (!FILE.exists()) {
 			System.out.println("File not found");
-
+			send_ERR(sendSocket, 1, "File not found.");
+			return false;
+			
 			// SPACE NOT ENOUGH NEED TO HANDLE TOO
+		} else {
+			FileInputStream stream = new FileInputStream(FILE);
+
+			while (true) {
+				byte[] buffer = new byte[DATA_SIZE];
+
+				int bytesRead = stream.read(buffer);
+
+				ByteBuffer data = ByteBuffer.allocate(BUFSIZE);
+				data.putShort((short) OP_DAT);
+				data.putShort((short) block);
+				data.put(buffer);
+
+				ByteBuffer ack;
+
+				// We must limit this
+				int sendCounter = 0;
+				int resendLimit = 5;
+				int timeoutLimit = 5000;
+				long start = System.currentTimeMillis();
+
+				do {
+					DatagramPacket packet = new DatagramPacket(data.array(), bytesRead + 4);
+					sendSocket.send(packet);
+
+					ack = ByteBuffer.allocate(OP_ACK);
+					DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
+					sendSocket.receive(ackPacket);
+					sendCounter++;
+
+					if (sendCounter >= resendLimit)
+						send_ERR(sendSocket, 0, "Exceeded resend limit.");
+						break;
+
+				} while (ack.getShort() != OP_ACK && ack.getShort() != block && (System.currentTimeMillis() - start) < timeoutLimit);
+
+				if (bytesRead < 512 || sendCounter >= resendLimit)
+					break;
+
+				block++;
+			}
+
+			stream.close();
+			return true;
 		}
-
-		FileInputStream stream = new FileInputStream(FILE);
-
-		while (true) {
-			byte[] buffer = new byte[DATA_SIZE];
-
-			int bytesRead = stream.read(buffer);
-
-			ByteBuffer data = ByteBuffer.allocate(BUFSIZE);
-			data.putShort((short) OP_DAT);
-			data.putShort((short) block);
-			data.put(buffer);
-
-			ByteBuffer ack;
-
-			// We must limit this
-
-			do {
-				DatagramPacket packet = new DatagramPacket(data.array(), bytesRead + 4);
-				sendSocket.send(packet);
-
-				ack = ByteBuffer.allocate(OP_ACK);
-				DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
-				sendSocket.receive(ackPacket);
-			} while (ack.getShort() != OP_ACK && ack.getShort() != block);
-
-			if (bytesRead < 512)
-				break;
-
-			block++;
-		}
-
-		stream.close();
-		return true;
 	}
 
 	// private boolean receive_DATA_send_ACK(params) {return true;}
 
-	// private void send_ERR(DatagramSocket sendSocket, int errorCode, String
-	// errorMessage) {}
+	private void send_ERR(DatagramSocket sendSocket, int errorCode, String errorMessage) 
+			throws IOException {
+
+		ByteBuffer err = ByteBuffer.allocate(errorMessage.length() + 5);
+		err.putShort((short) OP_ERR);
+		err.putShort((short) errorCode);
+		err.put(errorMessage.getBytes());
+
+		DatagramPacket errPacket = new DatagramPacket(err.array(), err.array().length);
+		sendSocket.send(errPacket);
+	}
 }
