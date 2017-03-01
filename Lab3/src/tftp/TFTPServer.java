@@ -9,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 
 public class TFTPServer {
@@ -16,6 +17,7 @@ public class TFTPServer {
 	public static final int TFTPPORT = 4970;
 	public static final int BUFSIZE = 516;
 	public static final int DATA_SIZE = BUFSIZE - 4;
+	public static final int TIMEOUT = 5000;
 
 	// custom address at your PC
 	public static final String READDIR = "src/tftp/resources/read/";
@@ -77,7 +79,7 @@ public class TFTPServer {
 
 						System.out.printf("%s request for %s from %s using port\n",
 								(reqtype == OP_RRQ) ? "Read" : "Write", clientAddress.getHostName(),
-										clientAddress.getPort());
+								clientAddress.getPort());
 
 						// Read request
 						if (reqtype == OP_RRQ) {
@@ -161,7 +163,7 @@ public class TFTPServer {
 
 		} else if (opcode == OP_WRQ) {
 
-			// boolean result = receive_DATA_send_ACK(params);
+			boolean result = receive_DATA_send_ACK(sendSocket);
 
 		} else {
 			System.err.println("Invalid request. Sending an error packet.");
@@ -181,9 +183,11 @@ public class TFTPServer {
 			System.out.println("File not found");
 			send_ERR(sendSocket, 1, "File not found.");
 			return false;
-			
+
 			// SPACE NOT ENOUGH NEED TO HANDLE TOO
 		} else {
+
+			@SuppressWarnings("resource")
 			FileInputStream stream = new FileInputStream(FILE);
 
 			while (true) {
@@ -196,31 +200,36 @@ public class TFTPServer {
 				data.putShort((short) block);
 				data.put(buffer);
 
+				int sendCounter = 0;
+				final int RESEND_LIMIT = 5;
 				ByteBuffer ack;
 
-				// We must limit this
-				int sendCounter = 0;
-				int resendLimit = 5;
-				int timeoutLimit = 5000;
-				long start = System.currentTimeMillis();
+				try {
+					sendSocket.setSoTimeout(TIMEOUT);
 
-				do {
-					DatagramPacket packet = new DatagramPacket(data.array(), bytesRead + 4);
-					sendSocket.send(packet);
+					do {
+						DatagramPacket packet = new DatagramPacket(data.array(), bytesRead + 4);
+						sendSocket.send(packet);
 
-					ack = ByteBuffer.allocate(OP_ACK);
-					DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
-					sendSocket.receive(ackPacket);
-					sendCounter++;
+						ack = ByteBuffer.allocate(OP_ACK);
+						DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
+						sendSocket.receive(ackPacket);
 
-					if (sendCounter >= resendLimit)
-						send_ERR(sendSocket, 0, "Exceeded resend limit.");
-						break;
+					} while (ack.getShort() != OP_ACK && ack.getShort() != block && ++sendCounter < RESEND_LIMIT);
 
-				} while (ack.getShort() != OP_ACK && ack.getShort() != block && (System.currentTimeMillis() - start) < timeoutLimit);
+				} catch (SocketTimeoutException e) {
+					System.out.println("TIMEOUT EXCEPTION");
+					return false;
+				}
 
-				if (bytesRead < 512 || sendCounter >= resendLimit)
+				if (sendCounter >= RESEND_LIMIT) {
+					send_ERR(sendSocket, 0, "Exceeded resend limit.");
+					return false;
+				}
+
+				else if (bytesRead < 512) {
 					break;
+				}
 
 				block++;
 			}
@@ -230,12 +239,18 @@ public class TFTPServer {
 		}
 	}
 
-	// private boolean receive_DATA_send_ACK(params) {return true;}
+	private boolean receive_DATA_send_ACK(DatagramSocket sendSocket) throws IOException {
+		byte[] buffer = new byte[BUFSIZE];
+		DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+		sendSocket.receive(packet);
+		System.out.println("RECEIVED");
+		System.out.println("Length: " + packet.getLength());
+		return true;
+	}
 
-	private void send_ERR(DatagramSocket sendSocket, int errorCode, String errorMessage) 
-			throws IOException {
+	private void send_ERR(DatagramSocket sendSocket, int errorCode, String errorMessage) throws IOException {
 
-		ByteBuffer err = ByteBuffer.allocate(errorMessage.length() + 5);
+		ByteBuffer err = ByteBuffer.allocate(errorMessage.length() + OP_ERR);
 		err.putShort((short) OP_ERR);
 		err.putShort((short) errorCode);
 		err.put(errorMessage.getBytes());
