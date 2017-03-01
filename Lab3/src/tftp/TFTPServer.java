@@ -3,7 +3,9 @@ package tftp;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -11,6 +13,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class TFTPServer {
 
@@ -157,13 +160,16 @@ public class TFTPServer {
 	private void HandleRQ(DatagramSocket sendSocket, String requestedFile, int opcode) throws IOException {
 
 		if (opcode == OP_RRQ) {
+
 			int block = 0;
 
 			boolean result = send_DATA_receive_ACK(sendSocket, requestedFile, ++block);
 
 		} else if (opcode == OP_WRQ) {
 
-			boolean result = receive_DATA_send_ACK(sendSocket);
+			int block = 0;
+
+			boolean result = receive_DATA_send_ACK(sendSocket, requestedFile, block);
 
 		} else {
 			System.err.println("Invalid request. Sending an error packet.");
@@ -239,12 +245,59 @@ public class TFTPServer {
 		}
 	}
 
-	private boolean receive_DATA_send_ACK(DatagramSocket sendSocket) throws IOException {
-		byte[] buffer = new byte[BUFSIZE];
-		DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-		sendSocket.receive(packet);
-		System.out.println("RECEIVED");
-		System.out.println("Length: " + packet.getLength());
+	private boolean receive_DATA_send_ACK(DatagramSocket sendSocket, String requestedFile, int block)
+			throws IOException {
+
+		FileOutputStream output = new FileOutputStream(requestedFile.split("\0")[0]);
+
+		// First ACK
+		ByteBuffer ack = ByteBuffer.allocate(OP_ACK);
+		ack.putShort((short) OP_ACK);
+		ack.putShort((short) block);
+		DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
+		sendSocket.send(ackPacket);
+
+		while (true) {
+
+			try {
+
+				sendSocket.setSoTimeout(TIMEOUT);
+
+				byte[] buffer = new byte[BUFSIZE];
+				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+				sendSocket.receive(packet);
+
+				ByteBuffer wrapper = ByteBuffer.wrap(packet.getData());
+
+				if (wrapper.getShort() == OP_DAT) {
+
+					byte[] data = Arrays.copyOfRange(packet.getData(), 4, packet.getLength());
+					output.write(data);
+					output.flush();
+
+					ByteBuffer dataACK = ByteBuffer.allocate(OP_ACK);
+					dataACK.putShort((short) OP_ACK);
+					dataACK.putShort(wrapper.getShort());
+					sendSocket.send(new DatagramPacket(dataACK.array(), dataACK.array().length));
+
+					if (data.length < 512) {
+						sendSocket.close();
+						break;
+					}
+				}
+
+				else {
+					System.out.println("INVALID OPCODE FROM CLIENT");
+					return false;
+				}
+
+			} catch (SocketTimeoutException e) {
+				System.out.println("TIMEOUT");
+				return false;
+			}
+		}
+
+		output.close();
 		return true;
 	}
 
