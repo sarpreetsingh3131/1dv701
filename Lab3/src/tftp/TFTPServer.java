@@ -282,6 +282,7 @@ public class TFTPServer {
 
 					if (data.length < 512) {
 						sendSocket.close();
+						output.close();
 						break;
 					}
 				}
@@ -297,7 +298,7 @@ public class TFTPServer {
 			}
 		}
 
-		output.close();
+		//output.close();
 		return true;
 	}
 
