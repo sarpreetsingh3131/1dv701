@@ -175,7 +175,7 @@ public class TFTPServer {
 			System.err.println("Invalid request. Sending an error packet.");
 			// See "TFTP Formats" in TFTP specification for the ERROR packet
 			// contents
-			// send_ERR(params);
+			send_ERR(sendSocket, 0, "Request must be either 'Read' or 'Write' request.");
 			return;
 		}
 	}
@@ -228,6 +228,7 @@ public class TFTPServer {
 						
 						if (opcode == OP_ERR) {
 							System.out.println("Error code: " + blockOrError + ", " + ack.array().toString().trim());
+							send_ERR(sendSocket, 0, "Error packet was received from Client.");
 							return false;
 						}
 
