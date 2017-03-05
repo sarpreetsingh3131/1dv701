@@ -209,6 +209,8 @@ public class TFTPServer {
 				int sendCounter = 0;
 				final int RESEND_LIMIT = 5;
 				ByteBuffer ack;
+				short opcode;
+				short blockOrError;
 
 				try {
 					sendSocket.setSoTimeout(TIMEOUT);
@@ -220,8 +222,16 @@ public class TFTPServer {
 						ack = ByteBuffer.allocate(OP_ACK);
 						DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
 						sendSocket.receive(ackPacket);
+						
+						opcode = ack.getShort();
+						blockOrError = ack.getShort();
+						
+						if (opcode == OP_ERR) {
+							System.out.println("Error code: " + blockOrError + ", " + ack.array().toString().trim());
+							return false;
+						}
 
-					} while (ack.getShort() != OP_ACK && ack.getShort() != block && ++sendCounter < RESEND_LIMIT);
+					} while (opcode != OP_ACK && blockOrError != block && ++sendCounter < RESEND_LIMIT);
 
 				} catch (SocketTimeoutException e) {
 					System.out.println("TIMEOUT EXCEPTION");
@@ -277,8 +287,9 @@ public class TFTPServer {
 					sendSocket.receive(packet);
 
 					ByteBuffer wrapper = ByteBuffer.wrap(packet.getData());
+					short opcode = wrapper.getShort();
 
-					if (wrapper.getShort() == OP_DAT) {
+					if (opcode == OP_DAT) {
 
 						byte[] data = Arrays.copyOfRange(packet.getData(), 4, packet.getLength());
 						output.write(data);
@@ -294,6 +305,9 @@ public class TFTPServer {
 							output.close();
 							break;
 						}
+					} else if (opcode == OP_ERR) {
+						System.out.println("Error code: " + wrapper.getShort() + ", " + wrapper.array().toString().trim());
+						return false;
 					}
 
 					else {
