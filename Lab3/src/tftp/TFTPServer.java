@@ -191,7 +191,6 @@ public class TFTPServer {
 			send_ERR(sendSocket, 1, "File not found.");
 			return false;
 			
-			// SPACE NOT ENOUGH NEED TO HANDLE TOO
 		} else {
 
 			@SuppressWarnings("resource")
