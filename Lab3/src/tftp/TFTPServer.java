@@ -175,7 +175,8 @@ public class TFTPServer {
 			System.err.println("Invalid request. Sending an error packet.");
 			// See "TFTP Formats" in TFTP specification for the ERROR packet
 			// contents
-			send_ERR(sendSocket, 0, "Request must be either 'Read' or 'Write' request.");
+			// Use error code 4 here maybe?
+			send_ERR(sendSocket, 4, "Illegal TFTP operation.");
 			return;
 		}
 	}
@@ -189,7 +190,7 @@ public class TFTPServer {
 			System.out.println("File not found");
 			send_ERR(sendSocket, 1, "File not found.");
 			return false;
-
+			
 			// SPACE NOT ENOUGH NEED TO HANDLE TOO
 		} else {
 
@@ -262,6 +263,7 @@ public class TFTPServer {
 		/* If file already exists send error packet */
 		File file = new File(requestedFile.split("\0")[0]);
 		
+		
 		if (file.exists()) {
 			send_ERR(sendSocket, 6, "File already exists.");
 			return false;
@@ -293,6 +295,14 @@ public class TFTPServer {
 					if (opcode == OP_DAT) {
 
 						byte[] data = Arrays.copyOfRange(packet.getData(), 4, packet.getLength());
+						
+						// Check free space before writing data to disk
+						long freeSpace = new File(WRITEDIR).getUsableSpace();
+						if (freeSpace < data.length) {
+							send_ERR(sendSocket, 3, "Disk full or allocation exceeded.");
+							return false;
+						}
+						
 						output.write(data);
 						output.flush();
 
