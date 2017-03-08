@@ -21,6 +21,8 @@ public class TFTPServer {
 	public static final int BUFSIZE = 516;
 	public static final int DATA_SIZE = BUFSIZE - 4;
 	public static final int TIMEOUT = 5000;
+	public static int CLIENT_TID;
+	public static int SERVER_TID;
 
 	// custom address at your PC
 	public static final String READDIR = "src/tftp/resources/read/";
@@ -79,6 +81,8 @@ public class TFTPServer {
 
 						// Connect to client
 						sendSocket.connect(clientAddress);
+						CLIENT_TID = sendSocket.getPort();
+						SERVER_TID = sendSocket.getLocalPort();
 
 						System.out.printf("%s request for %s from %s using port\n",
 								(reqtype == OP_RRQ) ? "Read" : "Write", clientAddress.getHostName(),
@@ -173,166 +177,185 @@ public class TFTPServer {
 
 		} else {
 			System.err.println("Invalid request. Sending an error packet.");
-			// See "TFTP Formats" in TFTP specification for the ERROR packet
-			// contents
-			// Use error code 4 here maybe?
+
 			send_ERR(sendSocket, 4, "Illegal TFTP operation.");
 			return;
 		}
 	}
 
-	private boolean send_DATA_receive_ACK(DatagramSocket sendSocket, String requestedFile, int block)
-			throws IOException {
+	private boolean send_DATA_receive_ACK(DatagramSocket sendSocket, String requestedFile, int block) {
 
 		final File FILE = new File(requestedFile.split("\0")[0]);
 
-		if (!FILE.exists()) {
-			System.out.println("File not found");
-			send_ERR(sendSocket, 1, "File not found.");
-			return false;
-			
-		} else {
+		try {
+			if (!FILE.exists()) {
+				System.out.println("File not found");
+				send_ERR(sendSocket, 1, "File not found.");
+				return false;
 
-			@SuppressWarnings("resource")
-			FileInputStream stream = new FileInputStream(FILE);
+			} else {
 
-			while (true) {
-				byte[] buffer = new byte[DATA_SIZE];
+				@SuppressWarnings("resource")
+				FileInputStream stream = new FileInputStream(FILE);
 
-				int bytesRead = stream.read(buffer);
+				while (true) {
+					byte[] buffer = new byte[DATA_SIZE];
 
-				ByteBuffer data = ByteBuffer.allocate(BUFSIZE);
-				data.putShort((short) OP_DAT);
-				data.putShort((short) block);
-				data.put(buffer);
+					int bytesRead = stream.read(buffer);
 
-				int sendCounter = 0;
-				final int RESEND_LIMIT = 5;
-				ByteBuffer ack;
-				short opcode;
-				short blockOrError;
+					ByteBuffer data = ByteBuffer.allocate(BUFSIZE);
+					data.putShort((short) OP_DAT);
+					data.putShort((short) block);
+					data.put(buffer);
 
-				try {
-					sendSocket.setSoTimeout(TIMEOUT);
+					int sendCounter = 0;
+					final int RESEND_LIMIT = 5;
+					ByteBuffer ack;
+					short opcode;
+					short blockOrError;
 
-					do {
-						DatagramPacket packet = new DatagramPacket(data.array(), bytesRead + 4);
-						sendSocket.send(packet);
+					try {
+						sendSocket.setSoTimeout(TIMEOUT);
 
-						ack = ByteBuffer.allocate(OP_ACK);
-						DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
-						sendSocket.receive(ackPacket);
-						
-						opcode = ack.getShort();
-						blockOrError = ack.getShort();
-						
-						if (opcode == OP_ERR) {
-							System.out.println("Error code: " + blockOrError + ", " + ack.array().toString().trim());
-							send_ERR(sendSocket, 0, "Error packet was received from Client.");
-							return false;
-						}
+						do {
+							DatagramPacket packet = new DatagramPacket(data.array(), bytesRead + 4);
+							sendSocket.send(packet);
 
-					} while (opcode != OP_ACK && blockOrError != block && ++sendCounter < RESEND_LIMIT);
+							ack = ByteBuffer.allocate(OP_ACK);
+							DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
+							sendSocket.receive(ackPacket);
 
-				} catch (SocketTimeoutException e) {
-					System.out.println("TIMEOUT EXCEPTION");
-					return false;
+							opcode = ack.getShort();
+							blockOrError = ack.getShort();
+
+							if (opcode == OP_ERR) {
+								System.out.println("Error code: " + blockOrError + ", " + ack.array().toString().trim());
+								send_ERR(sendSocket, 0, "Error packet was received from Client.");
+								return false;
+								
+							} else if (CLIENT_TID != sendSocket.getPort() && SERVER_TID != sendSocket.getLocalPort()) {
+								send_ERR(sendSocket, 5, "Unknown transfer ID.");
+								return false;
+							}
+
+						} while (opcode != OP_ACK && blockOrError != block && ++sendCounter < RESEND_LIMIT);
+
+					} catch (SocketTimeoutException e) {
+						System.out.println("TIMEOUT EXCEPTION");
+						return false;
+					}
+
+					if (sendCounter >= RESEND_LIMIT) {
+						send_ERR(sendSocket, 0, "Exceeded resend limit.");
+						return false;
+					}
+
+					else if (bytesRead < 512) {
+						break;
+					}
+
+					block++;
 				}
 
-				if (sendCounter >= RESEND_LIMIT) {
-					send_ERR(sendSocket, 0, "Exceeded resend limit.");
-					return false;
-				}
-
-				else if (bytesRead < 512) {
-					break;
-				}
-
-				block++;
+				stream.close();
+				return true;
 			}
+		} catch (IOException e) {
+			try {
+				send_ERR(sendSocket, 2, "Access violation.");
 
-			stream.close();
-			return true;
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+			return false;
 		}
 	}
 
-	private boolean receive_DATA_send_ACK(DatagramSocket sendSocket, String requestedFile, int block)
-			throws IOException {
+	private boolean receive_DATA_send_ACK(DatagramSocket sendSocket, String requestedFile, int block) {
 
 		/* If file already exists send error packet */
 		File file = new File(requestedFile.split("\0")[0]);
-		
-		
-		if (file.exists()) {
-			send_ERR(sendSocket, 6, "File already exists.");
-			return false;
-			
-		} else {
 
-			FileOutputStream output = new FileOutputStream(requestedFile.split("\0")[0]);
+		try {
+			if (file.exists()) {
+				send_ERR(sendSocket, 6, "File already exists.");
+				return false;
 
-			// First ACK
-			ByteBuffer ack = ByteBuffer.allocate(OP_ACK);
-			ack.putShort((short) OP_ACK);
-			ack.putShort((short) block);
-			DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
-			sendSocket.send(ackPacket);
+			} else {
 
-			while (true) {
+				FileOutputStream output = new FileOutputStream(requestedFile.split("\0")[0]);
 
-				try {
+				// First ACK
+				ByteBuffer ack = ByteBuffer.allocate(OP_ACK);
+				ack.putShort((short) OP_ACK);
+				ack.putShort((short) block);
+				DatagramPacket ackPacket = new DatagramPacket(ack.array(), ack.array().length);
+				sendSocket.send(ackPacket);
 
-					sendSocket.setSoTimeout(TIMEOUT);
+				while (true) {
 
-					byte[] buffer = new byte[BUFSIZE];
-					DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-					sendSocket.receive(packet);
+					try {
 
-					ByteBuffer wrapper = ByteBuffer.wrap(packet.getData());
-					short opcode = wrapper.getShort();
+						sendSocket.setSoTimeout(TIMEOUT);
 
-					if (opcode == OP_DAT) {
+						byte[] buffer = new byte[BUFSIZE];
+						DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+						sendSocket.receive(packet);
 
-						byte[] data = Arrays.copyOfRange(packet.getData(), 4, packet.getLength());
-						
-						// Check free space before writing data to disk
-						long freeSpace = new File(WRITEDIR).getUsableSpace();
-						if (freeSpace < data.length) {
-							send_ERR(sendSocket, 3, "Disk full or allocation exceeded.");
+						ByteBuffer wrapper = ByteBuffer.wrap(packet.getData());
+						short opcode = wrapper.getShort();
+
+						if (opcode == OP_DAT) {
+
+							byte[] data = Arrays.copyOfRange(packet.getData(), 4, packet.getLength());
+
+							// Check free space before writing data to disk
+							long freeSpace = new File(WRITEDIR).getUsableSpace();
+							if (freeSpace < data.length) {
+								send_ERR(sendSocket, 3, "Disk full or allocation exceeded.");
+								return false;
+							}
+
+							output.write(data);
+							output.flush();
+
+							ByteBuffer dataACK = ByteBuffer.allocate(OP_ACK);
+							dataACK.putShort((short) OP_ACK);
+							dataACK.putShort(wrapper.getShort());
+							sendSocket.send(new DatagramPacket(dataACK.array(), dataACK.array().length));
+
+							if (data.length < 512) {
+								sendSocket.close();
+								output.close();
+								break;
+							}
+						} else if (opcode == OP_ERR) {
+							System.out.println("Error code: " + wrapper.getShort() + ", " + wrapper.array().toString().trim());
 							return false;
 						}
-						
-						output.write(data);
-						output.flush();
 
-						ByteBuffer dataACK = ByteBuffer.allocate(OP_ACK);
-						dataACK.putShort((short) OP_ACK);
-						dataACK.putShort(wrapper.getShort());
-						sendSocket.send(new DatagramPacket(dataACK.array(), dataACK.array().length));
-
-						if (data.length < 512) {
-							sendSocket.close();
-							output.close();
-							break;
+						else {
+							System.out.println("INVALID OPCODE FROM CLIENT");
+							return false;
 						}
-					} else if (opcode == OP_ERR) {
-						System.out.println("Error code: " + wrapper.getShort() + ", " + wrapper.array().toString().trim());
+
+					} catch (SocketTimeoutException e) {
+						System.out.println("TIMEOUT");
 						return false;
 					}
-
-					else {
-						System.out.println("INVALID OPCODE FROM CLIENT");
-						return false;
-					}
-
-				} catch (SocketTimeoutException e) {
-					System.out.println("TIMEOUT");
-					return false;
 				}
+				return true;
 			}
 
-			//output.close();
-			return true;
+		} catch (IOException e) {
+			try {
+				send_ERR(sendSocket, 2, "Access violation.");
+
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+			return false;
 		}
 	}
 
