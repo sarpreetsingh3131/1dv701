@@ -2,8 +2,8 @@ package tftp.errors;
 
 public abstract class Error {
 
-	private String msg;
-	private int code;
+	private final String msg;
+	private final int code;
 
 	public Error(String msg, int code) {
 		this.msg = msg;

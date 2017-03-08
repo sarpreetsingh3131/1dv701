@@ -1,95 +1,82 @@
 package tftp;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import tftp.Request.RequestType;
+import java.io.*;
+import java.net.*;
 import tftp.errors.ErrorFactory;
-import tftp.exceptions.FileAlreadyExistsException;
-import tftp.exceptions.InvalidModeException;
-import tftp.exceptions.NotDefinedException;
-import tftp.exceptions.OutOfMemoryException;
-import tftp.exceptions.ResendLimitExceedException;
-import tftp.exceptions.UnknownRequestException;
+import tftp.exceptions.*;
 
-public class ServerThread extends Thread {
+public class ServerThread {
 
 	private final int BUFSIZE = 516;
-	private final int DATASIZE = BUFSIZE - 4;
-	private final int TIMEOUT = 8000;
-	private final int PORT;
-	private DatagramSocket socket;
-	private SharedFolder sharedFolder;
 	private ErrorFactory errFactory;
+	private DatagramSocket sendSocket;
 
-	public ServerThread(int port) {
-		this.PORT = port;
-		sharedFolder = new SharedFolder();
-	}
+	public void start(int PORT) {
 
-	private void setUpSocket() throws SocketException {
-		socket = new DatagramSocket(null);
-		SocketAddress localBindPoint = new InetSocketAddress(PORT);
-		socket.bind(localBindPoint);
-		System.out.printf("Listening at port %d for new requests\n", PORT);
-	}
-
-	@Override
-	public void run() {
 		try {
+			DatagramSocket socket = new DatagramSocket(null);
+			SocketAddress localBindPoint = new InetSocketAddress(PORT);
+			socket.bind(localBindPoint);
+			System.out.printf("Listening at port %d for new requests\n", PORT);
+
 			byte[] buf = new byte[BUFSIZE];
-			setUpSocket();
 
 			while (true) {
-				Request request = new Request();
-				final InetSocketAddress clientAddress = request.getClientAddress(socket, buf);
-				RequestType reqType = request.parseRQ(buf);
 
-				DatagramSocket sendSocket = new DatagramSocket(0);
-				sendSocket.connect(clientAddress);
-				errFactory = new ErrorFactory(sendSocket);
-				printDetails(reqType, clientAddress);
+				Request request = Request.parse(socket, buf);
+				final InetSocketAddress clientAddress = request.getClientAddress();
 
-				sendSocket.setSoTimeout(TIMEOUT);
-				request.handleRQ(sendSocket, reqType, sharedFolder, DATASIZE);
-				sendSocket.close();
+				new Thread() {
+					@Override
+					public void run() {
+
+						try {
+							sendSocket = new DatagramSocket(0);
+							sendSocket.connect(clientAddress);
+							errFactory = new ErrorFactory(sendSocket);
+							request.printDetails();
+
+							if (!request.isOctet()) {
+								throw new NotDefinedException("Unallowed Mode");
+							}
+
+							new RequestHandler().handle(sendSocket, request, sendSocket.getPort());
+
+						} catch (FileNotFoundException e) {
+							errFactory.sendError1FileNotFound();
+
+						} catch (NotDefinedException e) {
+							errFactory.sendError0NotDefined(e.getMsg());
+
+						} catch (FileAlreadyExistsException e) {
+							errFactory.sendError6FileAlreadyExists();
+
+						} catch (OutOfMemoryException e) {
+							errFactory.sendError3DiskFullOrAllocationExceeded();
+
+						} catch (IllegalTFTPOperationException e) {
+							errFactory.sendError4IllegalTFTPOperation();
+
+						} catch (InvalidTransferIDException e) {
+							errFactory.sendError5UnknownTransferID();
+
+						} catch (AccessViolationException e) {
+							errFactory.sendError2AccessViolation();
+						
+						} catch (NoSuchUserException e) {
+							errFactory.sendError7NoSuchUser();
+						
+						} catch (IOException e) {
+							e.printStackTrace();
+						} 
+						
+						sendSocket.close();
+						System.out.println("Connection Closed");
+					}
+				}.start();
 			}
-
-		} catch (SocketTimeoutException e) {
-			e.printStackTrace();
-
-		} catch (InvalidModeException e) {
-			e.printStackTrace();
-
-		} catch (UnknownRequestException | ArrayIndexOutOfBoundsException e) {
-			errFactory.sendError4IllegalTFTPOperation();
-
-		} catch (FileNotFoundException e) {
-			errFactory.sendError1FileNotFound();
-
-		} catch (NotDefinedException e) {
-			e.printStackTrace();
-
 		} catch (IOException e) {
-			errFactory.sendError2AccessViolation();
-
-		} catch (FileAlreadyExistsException e) {
-			errFactory.sendError6FileAlreadyExists();
-
-		} catch (ResendLimitExceedException e) {
 			e.printStackTrace();
-
-		} catch (OutOfMemoryException e) {
-			errFactory.sendError3DiskFullOrAllocationExceeded();
 		}
-	}
-
-	private void printDetails(RequestType reqType, InetSocketAddress clientAddress) {
-		System.out.printf("%s request for %s from %s using port\n", (reqType == RequestType.READ) ? "Read" : "Write",
-				clientAddress.getHostName(), clientAddress.getPort());
 	}
 }

@@ -9,6 +9,6 @@ public class ACKPacket extends Packet {
 	}
 
 	public ACKPacket(int block) {
-		super(OP_ACK, OP_ACK, block);
+		super(OP_ACK, OP_ACK, block, OP_ACK);
 	}
 }

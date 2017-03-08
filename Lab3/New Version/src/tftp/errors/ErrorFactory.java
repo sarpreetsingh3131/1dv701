@@ -12,8 +12,8 @@ public class ErrorFactory {
 		this.sendSocket = sendSocket;
 	}
 
-	public void sendError0NotDefined() {
-		send(new Error0NotDefined());
+	public void sendError0NotDefined(String msg) {
+		send(new Error0NotDefined(msg));
 	}
 
 	public void sendError1FileNotFound() {

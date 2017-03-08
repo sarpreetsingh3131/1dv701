@@ -7,7 +7,8 @@ public class ErrorPacket extends Packet {
 	public final static int OP_ERR = 5;
 
 	public ErrorPacket(Error error) {
-		super(error.getMsg().length() + OP_ERR, OP_ERR, error.getCode());
-		super.setData(error.getMsg().getBytes());
+		super(MAX_SIZE, OP_ERR, error.getCode(), MAX_SIZE);
+		byteBuffer.put(error.getMsg().getBytes());
+		byteBuffer.put((byte) 0);
 	}
 }
