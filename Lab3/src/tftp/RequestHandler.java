@@ -42,8 +42,6 @@ public class RequestHandler {
 	 *             same
 	 * @throws AccessViolationException
 	 *             When directory or file does not allow access
-	 * @throws NoSuchUserException
-	 *             When user
 	 * 
 	 */
 	public void handle(DatagramSocket sendSocket, RequestParser requestParser) throws FileNotFoundException,
