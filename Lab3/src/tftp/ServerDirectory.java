@@ -17,14 +17,13 @@ public class ServerDirectory {
 	 * 
 	 * @param buffer
 	 * @return
-	 * @throws NoSuchUserException
-	 *             If error occurs while reading the file
+	 * @throws AccessViolationException
 	 */
-	public int read(byte[] buffer) throws NoSuchUserException {
+	public int read(byte[] buffer) throws AccessViolationException {
 		try {
 			return input.read(buffer);
 		} catch (IOException e) {
-			throw new NoSuchUserException();
+			throw new AccessViolationException();
 		}
 	}
 
@@ -40,6 +39,7 @@ public class ServerDirectory {
 	 *             When I/O occurs
 	 */
 	public int write(byte[] data) throws OutOfMemoryException, AccessViolationException {
+
 		if (WRITE_DIR.getFreeSpace() < (file.length() + data.length)) {
 			file.delete();
 			throw new OutOfMemoryException();
@@ -48,11 +48,11 @@ public class ServerDirectory {
 		try {
 			output.write(data);
 			output.flush();
-			return data.length;
-
 		} catch (IOException e) {
 			throw new AccessViolationException();
 		}
+
+		return data.length;
 	}
 
 	/**
@@ -61,10 +61,19 @@ public class ServerDirectory {
 	 * @param path
 	 * @throws FileNotFoundException
 	 *             When requested file is not found
+	 * @throws AccessViolationException
+	 *             When file is not locked or not readable
 	 */
-	public void setReadPath(String path) throws FileNotFoundException {
+	public void setReadPath(String path) throws FileNotFoundException, AccessViolationException {
 		file = new File(READ_DIR, path);
-		input = new FileInputStream(file);
+
+		// file.setReadable(false); // For testing
+
+		try {
+			input = new FileInputStream(file);
+		} catch (IOException e) {
+			throw new AccessViolationException();
+		}
 	}
 
 	/**
@@ -74,7 +83,7 @@ public class ServerDirectory {
 	 * @throws FileAlreadyExistsException
 	 *             If file already existsF
 	 * @throws AccessViolationException
-	 *             When I/O occurs
+	 *             When directory is read only
 	 */
 	public void setWritePath(String path) throws FileAlreadyExistsException, AccessViolationException {
 		file = new File(WRITE_DIR, path);
@@ -83,6 +92,8 @@ public class ServerDirectory {
 			throw new FileAlreadyExistsException();
 		}
 
+		// WRITE_DIR.setWritable(false); //For testing access violation
+
 		try {
 			output = new FileOutputStream(file);
 		} catch (IOException e) {
@@ -90,33 +101,19 @@ public class ServerDirectory {
 		}
 	}
 
-	/**
-	 * Delete the file
-	 */
+	/* Some handy methods */
 	public void deleteFile() {
 		file.delete();
 	}
 
-	/**
-	 * It close {@link FileInputStream}.
-	 * 
-	 * @throws NoSuchUserException
-	 *             When I/O occurs while closing
-	 */
-	public void closeInputStream() throws NoSuchUserException {
+	public void closeInputStream() throws AccessViolationException {
 		try {
 			input.close();
 		} catch (IOException e) {
-			throw new NoSuchUserException();
+			throw new AccessViolationException();
 		}
 	}
 
-	/**
-	 * It close the {@link FileOutputStream}
-	 * 
-	 * @throws AccessViolationException
-	 *             When I/O occurs while closing
-	 */
 	public void closeOutputStream() throws AccessViolationException {
 		try {
 			output.close();
