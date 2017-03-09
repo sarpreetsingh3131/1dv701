@@ -1,8 +1,6 @@
 package tftp;
 
 import java.io.*;
-import java.net.DatagramPacket;
-import java.util.Arrays;
 import tftp.exceptions.*;
 
 public class ServerDirectory {
@@ -13,6 +11,15 @@ public class ServerDirectory {
 	private FileInputStream input;
 	private FileOutputStream output;
 
+	/**
+	 * This method read the requested file and save it in the buffer and returns
+	 * number of bytes read
+	 * 
+	 * @param buffer
+	 * @return
+	 * @throws NoSuchUserException
+	 *             If error occurs while reading the file
+	 */
 	public int read(byte[] buffer) throws NoSuchUserException {
 		try {
 			return input.read(buffer);
@@ -21,9 +28,18 @@ public class ServerDirectory {
 		}
 	}
 
-	public int write(DatagramPacket packet) throws OutOfMemoryException, AccessViolationException {
-		byte[] data = Arrays.copyOfRange(packet.getData(), 4, packet.getLength());
-
+	/**
+	 * This method write a file in the server directory and return the length of
+	 * written data.
+	 * 
+	 * @param data
+	 * @return
+	 * @throws OutOfMemoryException
+	 *             When disk space is low
+	 * @throws AccessViolationException
+	 *             When I/O occurs
+	 */
+	public int write(byte[] data) throws OutOfMemoryException, AccessViolationException {
 		if (WRITE_DIR.getFreeSpace() < (file.length() + data.length)) {
 			file.delete();
 			throw new OutOfMemoryException();
@@ -39,11 +55,27 @@ public class ServerDirectory {
 		}
 	}
 
+	/**
+	 * It create a new file which client will read
+	 * 
+	 * @param path
+	 * @throws FileNotFoundException
+	 *             When requested file is not found
+	 */
 	public void setReadPath(String path) throws FileNotFoundException {
 		file = new File(READ_DIR, path);
 		input = new FileInputStream(file);
 	}
 
+	/**
+	 * It create a new file which client will write.
+	 * 
+	 * @param path
+	 * @throws FileAlreadyExistsException
+	 *             If file already existsF
+	 * @throws AccessViolationException
+	 *             When I/O occurs
+	 */
 	public void setWritePath(String path) throws FileAlreadyExistsException, AccessViolationException {
 		file = new File(WRITE_DIR, path);
 
@@ -58,10 +90,19 @@ public class ServerDirectory {
 		}
 	}
 
+	/**
+	 * Delete the file
+	 */
 	public void deleteFile() {
 		file.delete();
 	}
 
+	/**
+	 * It close {@link FileInputStream}.
+	 * 
+	 * @throws NoSuchUserException
+	 *             When I/O occurs while closing
+	 */
 	public void closeInputStream() throws NoSuchUserException {
 		try {
 			input.close();
@@ -70,6 +111,12 @@ public class ServerDirectory {
 		}
 	}
 
+	/**
+	 * It close the {@link FileOutputStream}
+	 * 
+	 * @throws AccessViolationException
+	 *             When I/O occurs while closing
+	 */
 	public void closeOutputStream() throws AccessViolationException {
 		try {
 			output.close();

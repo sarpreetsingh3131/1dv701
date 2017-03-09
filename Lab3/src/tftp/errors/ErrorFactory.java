@@ -12,6 +12,8 @@ public class ErrorFactory {
 		this.sendSocket = sendSocket;
 	}
 
+	/* Some handy methods */
+
 	public void sendError0NotDefined(String msg) {
 		send(new Error0NotDefined(msg));
 	}
@@ -48,7 +50,6 @@ public class ErrorFactory {
 		try {
 			sendSocket.send(new ErrorPacket(error).toDatagramPacket());
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 }

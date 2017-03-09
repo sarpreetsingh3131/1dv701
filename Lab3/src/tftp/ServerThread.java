@@ -11,6 +11,20 @@ public class ServerThread {
 	private ErrorFactory errFactory;
 	private DatagramSocket sendSocket;
 
+	/**
+	 * This method set the socket and local point and connect them. Then it
+	 * parse the initial request which return clientAddress. Furthermore, it
+	 * create a thread for each client. Inside the thread, it creates a
+	 * DatagramSocket with any available port and connect it to clientAddress.
+	 * Now this socket will be used for transferring the data between server and
+	 * client. In addition, we pass this socket to error factory for sending the
+	 * errors when occurs. At last we pass the requestParser and socket to
+	 * RequestHandler which then reply to client. If any error occurs we catch
+	 * and send appropriate error code to client. We close the connection in the
+	 * end.
+	 * 
+	 * @param PORT
+	 */
 	public void start(int PORT) {
 
 		try {
@@ -23,8 +37,8 @@ public class ServerThread {
 
 			while (true) {
 
-				Request request = Request.parse(socket, buf);
-				final InetSocketAddress clientAddress = request.getClientAddress();
+				RequestParser requestParser = RequestParser.parse(socket, buf);
+				final InetSocketAddress clientAddress = requestParser.getClientAddress();
 
 				new Thread() {
 					@Override
@@ -34,13 +48,8 @@ public class ServerThread {
 							sendSocket = new DatagramSocket(0);
 							sendSocket.connect(clientAddress);
 							errFactory = new ErrorFactory(sendSocket);
-							request.printDetails();
-
-							if (!request.isOctet()) {
-								throw new NotDefinedException("Unallowed Mode");
-							}
-
-							new RequestHandler().handle(sendSocket, request, sendSocket.getPort());
+							requestParser.printDetails();
+							new RequestHandler().handle(sendSocket, requestParser);
 
 						} catch (FileNotFoundException e) {
 							errFactory.sendError1FileNotFound();
@@ -62,21 +71,31 @@ public class ServerThread {
 
 						} catch (AccessViolationException e) {
 							errFactory.sendError2AccessViolation();
-						
+
 						} catch (NoSuchUserException e) {
 							errFactory.sendError7NoSuchUser();
-						
+
+						} catch (IndexOutOfBoundsException e) {
+							errFactory.sendError0NotDefined("Malformed Request");
+
 						} catch (IOException e) {
-							e.printStackTrace();
-						} 
-						
+							/*
+							 * This IOException is not related to Access
+							 * violation or no such user, it is related to
+							 * sending and receiving the the packets, so we
+							 * decided to send Error 0
+							 */
+							errFactory.sendError0NotDefined("Transfer Problem");
+						}
+
 						sendSocket.close();
 						System.out.println("Connection Closed");
 					}
 				}.start();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("The given port is already in use!!");
+			System.exit(1);
 		}
 	}
 }
