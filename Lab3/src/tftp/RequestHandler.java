@@ -48,7 +48,7 @@ public class RequestHandler {
 	 */
 	public void handle(DatagramSocket sendSocket, RequestParser requestParser) throws FileNotFoundException,
 			NotDefinedException, IOException, FileAlreadyExistsException, OutOfMemoryException,
-			IllegalTFTPOperationException, InvalidTransferIDException, AccessViolationException, NoSuchUserException {
+			IllegalTFTPOperationException, InvalidTransferIDException, AccessViolationException {
 
 		if (!requestParser.isOctet()) {
 			throw new NotDefinedException("Unallowed Mode");
@@ -145,7 +145,7 @@ public class RequestHandler {
 	 * 
 	 */
 	private void readRQ(DatagramSocket sendSocket, String path, int block) throws FileNotFoundException,
-			NotDefinedException, IOException, InvalidTransferIDException, NoSuchUserException {
+			NotDefinedException, IOException, InvalidTransferIDException, AccessViolationException {
 
 		int retry = 0;
 		short opcode = 0;
