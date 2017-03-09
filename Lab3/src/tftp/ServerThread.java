@@ -72,20 +72,13 @@ public class ServerThread {
 						} catch (AccessViolationException e) {
 							errFactory.sendError2AccessViolation();
 
-						} catch (NoSuchUserException e) {
-							errFactory.sendError7NoSuchUser();
-
 						} catch (IndexOutOfBoundsException e) {
 							errFactory.sendError0NotDefined("Malformed Request");
 
 						} catch (IOException e) {
-							/*
-							 * This IOException is not related to Access
-							 * violation or no such user, it is related to
-							 * sending and receiving the the packets, so we
-							 * decided to send Error 0
-							 */
-							errFactory.sendError0NotDefined("Transfer Problem");
+							// If packet is not received or send due to security
+							// reasons
+							errFactory.sendError7NoSuchUser();
 						}
 
 						sendSocket.close();
