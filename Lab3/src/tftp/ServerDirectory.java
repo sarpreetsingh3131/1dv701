@@ -5,8 +5,12 @@ import tftp.exceptions.*;
 
 public class ServerDirectory {
 
-	private final File READ_DIR = new File("src/tftp/resources/read/");
-	private final File WRITE_DIR = new File("src/tftp/resources/write/");
+	// This path separator works on mac only
+	private final String PATH_SEPERATOR = "/"; // For windows = "\\"
+	private final File READ_DIR = new File(
+			"src" + PATH_SEPERATOR + "tftp" + PATH_SEPERATOR + "resources" + PATH_SEPERATOR + "read" + PATH_SEPERATOR);
+	private final File WRITE_DIR = new File(
+			"src" + PATH_SEPERATOR + "tftp" + PATH_SEPERATOR + "resources" + PATH_SEPERATOR + "write" + PATH_SEPERATOR);
 	private final String ALLOWED_IP = "192.0.0.1";
 	private File file;
 	private FileInputStream input;
@@ -71,18 +75,19 @@ public class ServerDirectory {
 	 *             When file is not locked or not readable
 	 * @throws NoSuchUserException
 	 */
-	public void setReadPath(String path, String host)
+	public void setReadPath(String path, String ip)
 			throws FileNotFoundException, AccessViolationException, NoSuchUserException {
+
 		file = new File(READ_DIR, path);
-		System.out.println(host);
+
 		try {
 			if (!file.getCanonicalPath().substring(0, READ_DIR.getAbsolutePath().length())
 					.equals(READ_DIR.getAbsolutePath())) {
 				throw new AccessViolationException();
 			}
 
-			else if (file.getCanonicalPath().startsWith((READ_DIR.getAbsolutePath()) + "/personal")
-					&& !host.equals(ALLOWED_IP)) {
+			else if (file.getCanonicalPath().startsWith((READ_DIR.getAbsolutePath()) + PATH_SEPERATOR + "personal")
+					&& !ip.equals(ALLOWED_IP)) {
 				throw new NoSuchUserException();
 			}
 
