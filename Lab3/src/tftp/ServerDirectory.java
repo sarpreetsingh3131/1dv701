@@ -7,6 +7,7 @@ public class ServerDirectory {
 
 	private final File READ_DIR = new File("src/tftp/resources/read/");
 	private final File WRITE_DIR = new File("src/tftp/resources/write/");
+	private final String ALLOWED_IP = "192.0.0.1";
 	private File file;
 	private FileInputStream input;
 	private FileOutputStream output;
@@ -36,7 +37,7 @@ public class ServerDirectory {
 	 * @throws OutOfMemoryException
 	 *             When disk space is low
 	 * @throws AccessViolationException
-	 *             When I/O occurs
+	 *             When file is not locked or not readable
 	 */
 	public int write(byte[] data) throws OutOfMemoryException, AccessViolationException {
 
@@ -56,20 +57,35 @@ public class ServerDirectory {
 	}
 
 	/**
-	 * It create a new file which client will read
+	 * It create a new file which client will read. In addition, we also check
+	 * if requested file is in the server directory because a client can use
+	 * './' or '../' to change the folder. Canonical path helps to verify this
+	 * and throw error if file denies the access. For no such user we made a
+	 * folder called 'personal' and only client with 'ALLOWED_IP' address can
+	 * access this, otherwise we return error
 	 * 
 	 * @param path
 	 * @throws FileNotFoundException
 	 *             When requested file is not found
 	 * @throws AccessViolationException
 	 *             When file is not locked or not readable
+	 * @throws NoSuchUserException
 	 */
-	public void setReadPath(String path) throws FileNotFoundException, AccessViolationException {
+	public void setReadPath(String path, String host)
+			throws FileNotFoundException, AccessViolationException, NoSuchUserException {
 		file = new File(READ_DIR, path);
-
-		// file.setReadable(false); // For testing
-
+		System.out.println(host);
 		try {
+			if (!file.getCanonicalPath().substring(0, READ_DIR.getAbsolutePath().length())
+					.equals(READ_DIR.getAbsolutePath())) {
+				throw new AccessViolationException();
+			}
+
+			else if (file.getCanonicalPath().startsWith((READ_DIR.getAbsolutePath()) + "/personal")
+					&& !host.equals(ALLOWED_IP)) {
+				throw new NoSuchUserException();
+			}
+
 			input = new FileInputStream(file);
 		} catch (IOException e) {
 			throw new AccessViolationException();
@@ -91,8 +107,6 @@ public class ServerDirectory {
 		if (file.exists()) {
 			throw new FileAlreadyExistsException();
 		}
-
-		// WRITE_DIR.setWritable(false); //For testing access violation
 
 		try {
 			output = new FileOutputStream(file);

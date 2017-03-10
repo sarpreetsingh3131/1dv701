@@ -40,7 +40,7 @@ public class RequestParser {
 
 		return new RequestParser(new InetSocketAddress(packet.getAddress(), packet.getPort()),
 				getType(ByteBuffer.wrap(buf).getShort()), new String(buf, 2, buf.length - 2).split("\0")[0],
-				new String(buf, 2, buf.length - 2).split("\0")[1].equals(MODE));
+				new String(buf, 2, buf.length - 2).split("\0")[1].toLowerCase().equals(MODE));
 	}
 
 	/**

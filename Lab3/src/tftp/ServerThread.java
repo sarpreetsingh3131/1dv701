@@ -76,8 +76,9 @@ public class ServerThread {
 							errFactory.sendError0NotDefined("Malformed Request");
 
 						} catch (IOException e) {
-							// If packet is not received or send due to security
-							// reasons
+							errFactory.sendError0NotDefined("Internal Error");
+						
+						} catch (NoSuchUserException e) {
 							errFactory.sendError7NoSuchUser();
 						}
 

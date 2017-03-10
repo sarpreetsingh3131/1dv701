@@ -42,11 +42,13 @@ public class RequestHandler {
 	 *             same
 	 * @throws AccessViolationException
 	 *             When directory or file does not allow access
+	 * @throws NoSuchUserException
+	 *             When user is not same as expected
 	 * 
 	 */
 	public void handle(DatagramSocket sendSocket, RequestParser requestParser) throws FileNotFoundException,
 			NotDefinedException, IOException, FileAlreadyExistsException, OutOfMemoryException,
-			IllegalTFTPOperationException, InvalidTransferIDException, AccessViolationException {
+			IllegalTFTPOperationException, InvalidTransferIDException, AccessViolationException, NoSuchUserException {
 
 		if (!requestParser.isOctet()) {
 			throw new NotDefinedException("Unallowed Mode");
@@ -127,28 +129,30 @@ public class RequestHandler {
 	}
 
 	/**
-	 * In this method we begin by setting the path of requested file. Then we
-	 * enter in a loop which goes on until we reach the limit or we get last
-	 * packet or if an error occurs such as got error packet from client. Inside
-	 * this loop we create a buffer(512), read the file, increase the block and
-	 * create a data packet from it. Then we send this packet and wait for ACK.
-	 * If timeout occurs and got no ACK we try again until we reach the limit.
-	 * When we get packet from client, we first check if it is from same client
-	 * by comparing the port numbers. We throw exception if they are not same.
-	 * Furthermore we get opcode and block from received packet and check if its
-	 * an error packet, if yes we again throw exception. We do this process
-	 * until we limit exceeded or we get ACK packet whose block is same as we
-	 * expected. We throw exception if limit exceeded otherwise we break this
-	 * loop if packet is less than 512 which means its the last one.
+	 * In this method we begin by setting the path of requested file as well as
+	 * host name which we verify for 'personal' folder access. Then we enter in
+	 * a loop which goes on until we reach the limit or we get last packet or if
+	 * an error occurs such as got error packet from client. Inside this loop we
+	 * create a buffer(512), read the file, increase the block and create a data
+	 * packet from it. Then we send this packet and wait for ACK. If timeout
+	 * occurs and got no ACK we try again until we reach the limit. When we get
+	 * packet from client, we first check if it is from same client by comparing
+	 * the port numbers. We throw exception if they are not same. Furthermore we
+	 * get opcode and block from received packet and check if its an error
+	 * packet, if yes we again throw exception. We do this process until we
+	 * limit exceeded or we get ACK packet whose block is same as we expected.
+	 * We throw exception if limit exceeded otherwise we break this loop if
+	 * packet is less than 512 which means its the last one.
 	 * 
 	 */
-	private void readRQ(DatagramSocket sendSocket, String path, int block) throws FileNotFoundException,
-			NotDefinedException, IOException, InvalidTransferIDException, AccessViolationException {
+	private void readRQ(DatagramSocket sendSocket, String path, int block)
+			throws FileNotFoundException, NotDefinedException, IOException, InvalidTransferIDException,
+			AccessViolationException, NoSuchUserException {
 
 		int retry = 0;
 		short opcode = 0;
 		short blockCode = 0;
-		directory.setReadPath(path);
+		directory.setReadPath(path, sendSocket.getLocalAddress().getHostAddress());
 
 		while (true) {
 
